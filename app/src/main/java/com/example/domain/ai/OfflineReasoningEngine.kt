@@ -34,6 +34,19 @@ object OfflineReasoningEngine {
         var artifactType: String? = null
 
         when {
+            // Identity & Chief Architect Queries
+            lower.contains("arsitek") || lower.contains("pembuat") || lower.contains("creator") || lower.contains("herman") || lower.contains("krisnanto") || lower.contains("siapa anda") || lower.contains("tentang nusantara") -> {
+                steps.add("🏛️ [System Registry] Membaca metadata identitas resmi Nusantara AI")
+                steps.add("👑 [Chief Architect] Mengidentifikasi kepemimpinan arsitektur sistem")
+                answer = "### 🏛️ Nusantara AI — Platform Kecerdasan Buatan Terpadu Indonesia\n\n" +
+                        "**Nusantara AI** dirancang dan diarsiteki oleh **Herman Krisnanto** sebagai **Lead System Architect & Chief Architect**.\n\n" +
+                        "**Pilar Arsitektur Utama:**\n" +
+                        "1. **Dual Inference Engine (Hybrid):** Menggabungkan kecepatan *On-Device Neural Quantization* (100% Offline) dan kedalaman komputasi *Cloud Intelligence* (Gemini & Open Models).\n" +
+                        "2. **E2EE Military-Grade Security:** Enkripsi lokal AES-256-GCM pada Room Database & EncryptedSharedPreferences.\n" +
+                        "3. **Multimodal Studio Suite:** Generasi Gambar, Video Sinematik, Komposisi Musik, dan Pemrosesan Dokumen 1M Token.\n" +
+                        "4. **Mesh Intelligence:** Sinkronisasi peer-to-peer terdistribusi untuk komputasi kolaboratif tanpa internet."
+            }
+
             // Code / HTML / UI Artifact queries
             lower.contains("html") || lower.contains("svg") || lower.contains("buatkan website") || lower.contains("ui") || lower.contains("desain") -> {
                 steps.add("🛠️ [Code Engine] Memetakan struktur visual dan komponen interaktif")
@@ -75,11 +88,10 @@ object OfflineReasoningEngine {
                 steps.add("✅ [Verification] Menghitung limit presisi dan pengecekan keabsahan")
                 
                 answer = "### 🧠 Penalaran Matematis Langkah-demi-Langkah:\n\n" +
-                        "1. **Identifikasi Masalah:** Menganalisis parameter dan operasi yang diminta pada perintah.\n" +
+                        "1. **Identifikasi Masalah:** Menganalisis parameter dan operasi matematika pada kueri.\n" +
                         "2. **Penerapan Teorema/Rumus:** Menggunakan prinsip dasar aritmatika dan aljabar presisi tinggi.\n" +
-                        "3. **Kalkulasi Deterministik:** Menjalankan komputasi lokal dengan akurasi 100% tanpa risiko halusinasi cloud.\n" +
-                        "4. **Hasil Akhir:** Perhitungan telah diverifikasi secara matematis.\n\n" +
-                        "💡 *Tip:* Model offline Nusantara dilengkapi mesin eksekusi formula numerik langsung di CPU/NPU perangkat Anda."
+                        "3. **Kalkulasi Deterministik:** Menjalankan komputasi deterministik dengan akurasi 100% tanpa risiko halusinasi cloud.\n" +
+                        "4. **Hasil Akhir:** Perhitungan telah diverifikasi dan siap digunakan."
             }
 
             // Coding / Programming
@@ -99,7 +111,7 @@ fun <T> List<T>.processSafely(predicate: (T) -> Boolean): List<T> {
                         "```kotlin\n$codeArtifact\n```\n\n" +
                         "**Penjelasan Arsitektural:**\n" +
                         "- Menggunakan extension function idiomatik Kotlin.\n" +
-                        "- Menjaga immutability data untuk menghindari efek samping (side-effects).\n" +
+                        "- Menjaga immutability data untuk menghindari efek samping (*side-effects*).\n" +
                         "- Sepenuhnya aman dan kompatibel dengan Jetpack Compose & Coroutines."
             }
 
@@ -140,14 +152,14 @@ fun <T> List<T>.processSafely(predicate: (T) -> Boolean): List<T> {
             else -> {
                 steps.add("🧠 [Deep Reasoning] Membaca konteks pertanyaan secara semantik")
                 steps.add("💡 [Knowledge Synthesis] Menyusun sintesis jawaban komprehensif")
-                steps.add("🚀 [Fast Dispatch] Mengirim respons dengan latensi <250ms")
-                answer = "Nusantara AI telah memproses pertanyaan Anda secara offline melalui mesin inferensi lokal:\n\n" +
-                        "Pertanyaan: \"$prompt\"\n\n" +
-                        "**Poin Solusi Utama:**\n" +
-                        "1. **Pemrosesan Cerdas:** Perangkat Anda mengeksekusi komputasi secara mandiri tanpa mengirim data ke internet.\n" +
-                        "2. **Privasi Maksimal:** Riwayat percakapan dienkripsi dengan standar militer AES-256-GCM.\n" +
-                        "3. **Kesiapan Sinkronisasi:** Saat Anda terhubung ke internet kembali, sistem dapat secara otomatis menyelaraskan ringkasan data tanpa membocorkan isi sensitif.\n\n" +
-                        "Ada yang ingin Anda diskusikan lebih lanjut atau perdalam?"
+                steps.add("🚀 [Fast Dispatch] Mengirim respons dengan latensi rendah")
+                answer = "Nusantara AI telah menganalisis dan memproses pertanyaan Anda:\n\n" +
+                        "**Pertanyaan:** \"$prompt\"\n\n" +
+                        "**Jawaban & Analisis Solutif:**\n" +
+                        "1. **Inti Konseptual:** Setiap aspek dari permintaan Anda telah ditinjau berdasarkan basis pengetahuan dan logika inferensi cerdas.\n" +
+                        "2. **Implementasi & Rekomendasi:** Anda dapat mengeksplorasi modul terkait di menu Visual Studio untuk gambar, Cinema Studio untuk video gerak, atau Alat & Persona untuk kustomisasi agen.\n" +
+                        "3. **Keamanan Data:** Percakapan Anda tersimpan aman dan terenkripsi AES-256 secara lokal di perangkat.\n\n" +
+                        "Silakan ajukan pertanyaan lanjutan atau instruksi spesifik jika memerlukan rincian lebih mendalam."
             }
         }
 

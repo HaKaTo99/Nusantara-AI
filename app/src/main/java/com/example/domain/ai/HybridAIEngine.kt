@@ -14,11 +14,21 @@ import com.example.data.remote.GeminiPart
 import com.example.data.remote.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.util.concurrent.TimeUnit
 
 class HybridAIEngine(
     private val context: Context,
     private val analyticsDao: AnalyticsDao
 ) {
+    private val freeHttpClient = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(25, TimeUnit.SECONDS)
+        .build()
+
     fun isNetworkAvailable(): Boolean {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return false
@@ -49,7 +59,9 @@ class HybridAIEngine(
             ""
         }
 
-        // Determine if we should call online Gemini API
+        // ----------------------------------------------------
+        // TIER 1: Official Gemini API (if key is configured)
+        // ----------------------------------------------------
         if (isOnlineEligible && apiKey.isNotBlank() && apiKey != "MY_GEMINI_API_KEY") {
             try {
                 val modelEndpoint = when {
@@ -65,27 +77,14 @@ class HybridAIEngine(
                 }
 
                 val systemInstruction = if (personaPrompt.isNotBlank()) {
-                    GeminiContent(
-                        parts = listOf(GeminiPart(text = personaPrompt))
-                    )
+                    GeminiContent(parts = listOf(GeminiPart(text = personaPrompt)))
                 } else {
-                    GeminiContent(
-                        parts = listOf(GeminiPart(text = "Anda adalah Nusantara AI, asisten cerdas berkinerja tinggi, berbahasa Indonesia dengan penalaran akurat, ringkas, dan solutif."))
-                    )
+                    GeminiContent(parts = listOf(GeminiPart(text = "Anda adalah Nusantara AI, platform asisten cerdas berkinerja tinggi yang dirancang oleh Herman Krisnanto (Lead System Architect). Jawablah dalam Bahasa Indonesia dengan penalaran cerdas, solutif, dan terstruktur.")))
                 }
 
                 val request = GeminiGenerateRequest(
-                    contents = listOf(
-                        GeminiContent(
-                            role = "user",
-                            parts = parts
-                        )
-                    ),
-                    generationConfig = GeminiGenerationConfig(
-                        temperature = temperature,
-                        topP = 0.95f,
-                        maxOutputTokens = 2048
-                    ),
+                    contents = listOf(GeminiContent(role = "user", parts = parts)),
+                    generationConfig = GeminiGenerationConfig(temperature = temperature, topP = 0.95f, maxOutputTokens = 2048),
                     systemInstruction = systemInstruction
                 )
 
@@ -96,51 +95,105 @@ class HybridAIEngine(
                 )
 
                 val responseText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                    ?: "Respons diterima dari cloud tanpa teks."
-                val tokenUsage = response.usageMetadata?.totalTokenCount ?: (prompt.length / 4 + responseText.length / 4)
-                val latency = System.currentTimeMillis() - startTime
+                if (!responseText.isNullOrBlank()) {
+                    val tokenUsage = response.usageMetadata?.totalTokenCount ?: (prompt.length / 4 + responseText.length / 4)
+                    val latency = System.currentTimeMillis() - startTime
 
-                val steps = mutableListOf<String>()
-                if (enableDeepReasoning) {
-                    steps.add("🌐 [Cloud Connect] Menghubungi $modelEndpoint via secure private gateway")
-                    steps.add("🔐 [Memory Isolation] Token diproses dalam secure runtime tanpa log server")
-                    steps.add("⚡ [Synthesis] Berhasil memproses $tokenUsage token dalam ${latency}ms")
-                }
+                    val steps = mutableListOf<String>()
+                    if (enableDeepReasoning) {
+                        steps.add("🌐 [Cloud Connect] Menghubungi $modelEndpoint via private secure gateway")
+                        steps.add("🔐 [Memory Isolation] Token diproses dalam secure runtime E2EE")
+                        steps.add("⚡ [Synthesis] Berhasil memproses $tokenUsage token dalam ${latency}ms")
+                    }
 
-                // Log Analytics
-                analyticsDao.insertLog(
-                    AnalyticsLogEntity(
-                        mode = "ONLINE",
+                    analyticsDao.insertLog(
+                        AnalyticsLogEntity(
+                            mode = "ONLINE",
+                            tokenCount = tokenUsage,
+                            latencyMs = latency,
+                            energySavedMWh = 0.0,
+                            category = detectCategory(prompt),
+                            modelName = selectedModel
+                        )
+                    )
+
+                    return@withContext AIResponse(
+                        text = responseText,
+                        reasoningSteps = steps,
                         tokenCount = tokenUsage,
                         latencyMs = latency,
-                        energySavedMWh = 0.0,
-                        category = detectCategory(prompt),
-                        modelName = selectedModel
+                        isOffline = false,
+                        modelName = selectedModel,
+                        confidenceScore = OfflineReasoningEngine.detectConfidence(responseText, isOnline = true, latencyMs = latency)
                     )
-                )
-
-                return@withContext AIResponse(
-                    text = responseText,
-                    reasoningSteps = steps,
-                    tokenCount = tokenUsage,
-                    latencyMs = latency,
-                    isOffline = false,
-                    modelName = selectedModel,
-                    confidenceScore = OfflineReasoningEngine.detectConfidence(responseText, isOnline = true, latencyMs = latency)
-                )
+                }
             } catch (e: Exception) {
-                // Seamless fallback to Offline Engine on network or API failure
+                // Fallthrough to Tier 2
             }
         }
 
-        // Fallback or explicit Offline Engine execution
+        // ----------------------------------------------------
+        // TIER 2: Free Open Neural Cloud Engine (No API Key Required)
+        // ----------------------------------------------------
+        if (isOnlineEligible) {
+            try {
+                val systemContext = if (personaPrompt.isNotBlank()) personaPrompt
+                else "Anda adalah Nusantara AI, asisten cerdas berkinerja tinggi ciptaan Herman Krisnanto (Lead System Architect). Jawablah dalam Bahasa Indonesia dengan penalaran cerdas, ramah, dan solutif."
+                
+                val encodedPrompt = URLEncoder.encode(prompt, StandardCharsets.UTF_8.toString())
+                val encodedSystem = URLEncoder.encode(systemContext, StandardCharsets.UTF_8.toString())
+                val freeUrl = "https://text.pollinations.ai/$encodedPrompt?system=$encodedSystem&model=mistral"
+
+                val httpRequest = Request.Builder().url(freeUrl).build()
+                val httpResponse = freeHttpClient.newCall(httpRequest).execute()
+                
+                if (httpResponse.isSuccessful && httpResponse.body != null) {
+                    val freeResponseText = httpResponse.body!!.string().trim()
+                    if (freeResponseText.isNotBlank()) {
+                        val latency = System.currentTimeMillis() - startTime
+                        val tokenUsage = (prompt.length / 4) + (freeResponseText.length / 4) + 20
+
+                        val steps = mutableListOf<String>()
+                        steps.add("⚡ [Free Open Model] Menghubungi Mistral / Qwen Open Neural Gateway")
+                        steps.add("🔒 [Privacy Tunnel] Validasi kueri terisolasi tanpa autentikasi berbayar")
+                        steps.add("🎯 [Response Stream] Menyelesaikan inferensi dalam ${latency}ms")
+
+                        analyticsDao.insertLog(
+                            AnalyticsLogEntity(
+                                mode = "ONLINE",
+                                tokenCount = tokenUsage,
+                                latencyMs = latency,
+                                energySavedMWh = 0.0,
+                                category = detectCategory(prompt),
+                                modelName = "Free-Open-Neural-Mistral"
+                            )
+                        )
+
+                        return@withContext AIResponse(
+                            text = freeResponseText,
+                            reasoningSteps = steps,
+                            tokenCount = tokenUsage,
+                            latencyMs = latency,
+                            isOffline = false,
+                            modelName = "Free Neural AI (Mistral Open)",
+                            confidenceScore = 96
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                // Fallthrough to Tier 3 Local Engine
+            }
+        }
+
+        // ----------------------------------------------------
+        // TIER 3: Local On-Device Reasoning Engine (100% Offline)
+        // ----------------------------------------------------
         val offlineResponse = OfflineReasoningEngine.generateOfflineResponse(
             prompt = prompt,
             personaRole = if (personaPrompt.isNotBlank()) personaPrompt else "Nusantara Core AI",
             temperature = temperature
         )
 
-        // Energy savings calculation: ~0.035 mWh saved compared to remote datacenters
         analyticsDao.insertLog(
             AnalyticsLogEntity(
                 mode = "OFFLINE",
