@@ -64,6 +64,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.domain.ai.image.FreeTextToImageEngine
 import com.example.domain.ai.image.GeneratedImageResult
+import com.example.domain.ai.video.FreeTextToVideoEngine
+import com.example.domain.ai.video.GeneratedVideoResult
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -665,33 +667,72 @@ fun VisualStudioTab(
 }
 
 // ----------------------------------------------------
-// 2. VIDEO STUDIO: Text-to-Video & Image-to-Video
+// ----------------------------------------------------
+// 2. VIDEO STUDIO: Real Free Models Text-to-Video & Motion Engine
 // ----------------------------------------------------
 @Composable
-fun VideoStudioTab() {
+fun VideoStudioTab(
+    onGenerate: (String) -> Unit = {}
+) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val videoEngine = remember { FreeTextToVideoEngine(context) }
+
     var videoPrompt by remember { mutableStateOf("") }
-    var videoMode by remember { mutableStateOf("T2V") } // "T2V" = Text to Video, "I2V" = Image to Video
+    var selectedVideoModelId by remember { mutableStateOf("animatediff") }
     var cameraMotion by remember { mutableStateOf("Pan Right") }
     var videoLengthSec by remember { mutableIntStateOf(5) }
     var fps by remember { mutableIntStateOf(30) }
+
     var isRendering by remember { mutableStateOf(false) }
-    var isPlaying by remember { mutableStateOf(false) }
-    var playbackProgress by remember { mutableFloatStateOf(0f) }
-    var generatedVideoTitle by remember { mutableStateOf<String?>(null) }
+    var generatedVideoResult by remember { mutableStateOf<GeneratedVideoResult?>(null) }
+    var isPlaying by remember { mutableStateOf(true) }
+    var currentFrameIndex by remember { mutableIntStateOf(0) }
+
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+    val primaryColor = MaterialTheme.colorScheme.primary
 
     val cameraMotions = listOf("Pan Right", "Dynamic Orbit", "Zoom In (Dolly)", "FPV Drone Dive", "Tilt Up")
-
-    val infiniteTransition = rememberInfiniteTransition(label = "video_frame")
-    val frameAnim by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "frame"
+    val videoInspirations = listOf(
+        "🦅 Elang Jawa terbang menukik melintasi lembah hutan tropis Gunung Salak saat fajar",
+        "🏎️ Mobil terbang melaju kencang di antara gedung pencakar langit IKN Nusantara malam hari",
+        "🌊 Gelombang ombak besar bergulung di pesisir pantai Bali berselimut sinar senja keemasan",
+        "🌋 Kawah Gunung Bromo mengepulkan asap putih tebal dengan lautan pasir berputar dramatis"
     )
+
+    // Animated Keyframe Looper
+    LaunchedEffect(isPlaying, generatedVideoResult) {
+        val result = generatedVideoResult
+        if (result != null && result.keyframeUrls.isNotEmpty() && isPlaying) {
+            while (true) {
+                kotlinx.coroutines.delay(650)
+                currentFrameIndex = (currentFrameIndex + 1) % result.keyframeUrls.size
+            }
+        }
+    }
+
+    fun executeVideoRender() {
+        if (videoPrompt.isBlank() || isRendering) return
+        isRendering = true
+        coroutineScope.launch {
+            try {
+                val result = videoEngine.generateVideo(
+                    prompt = videoPrompt,
+                    cameraMotion = cameraMotion,
+                    durationSec = videoLengthSec,
+                    fps = fps,
+                    modelId = selectedVideoModelId
+                )
+                generatedVideoResult = result
+                currentFrameIndex = 0
+                isPlaying = true
+            } catch (e: Exception) {
+                Toast.makeText(context, "Gagal merender video: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            } finally {
+                isRendering = false
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -699,71 +740,117 @@ fun VideoStudioTab() {
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        Text(
-            text = "🎬 Studio Video AI (Text-to-Video & Image-to-Video)",
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = "Generasi video sinematik dengan kontrol kamera neural & frame interpolation",
-            fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "🎬 Studio Video AI (Free Models)",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "AnimateDiff XL • CogVideoX • ModelScope • Nusantara Drone",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Mode Switcher
+        // Free Video Models Selector
+        Text(text = "Pilih Model Video AI Gratis:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
-                .padding(4.dp)
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            listOf("T2V" to "Text to Video 🎥", "I2V" to "Image to Video 🎞️").forEach { (mode, label) ->
-                val isSelected = videoMode == mode
-                Box(
+            FreeTextToVideoEngine.FREE_VIDEO_MODELS.forEach { model ->
+                val isSelected = selectedVideoModelId == model.id
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isSelected) primaryColor.copy(alpha = if (isDark) 0.25f else 0.15f)
+                            else MaterialTheme.colorScheme.surface,
                     modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) NeonViolet else Color.Transparent)
-                        .clickable { videoMode = mode }
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(
+                            width = if (isSelected) 2.dp else 1.dp,
+                            color = if (isSelected) primaryColor else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .clickable { selectedVideoModelId = model.id }
                 ) {
-                    Text(
-                        text = label,
-                        fontSize = 12.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(model.iconEmoji, fontSize = 13.sp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Column {
+                            Text(
+                                text = model.name,
+                                fontSize = 11.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
+        // Video Prompt Input
         OutlinedTextField(
             value = videoPrompt,
             onValueChange = { videoPrompt = it },
-            label = { Text(if (videoMode == "T2V") "Prompt Adegan Video" else "Deskripsi Animasi / Motion dari Gambar") },
-            placeholder = {
-                Text(
-                    if (videoMode == "T2V")
-                        "Contoh: Mobil sport futuristik melaju kencang di jalanan Jakarta saat hujan neon..."
-                    else
-                        "Contoh: Animasikan ombak laut bergerak perlahan dengan cahaya matahari terbenam..."
-                )
-            },
+            label = { Text("Deskripsikan Adegan Video yang Ingin Digenerasi") },
+            placeholder = { Text("Contoh: Katak pohon melompat perlahan dari batu berlumut di hutan hujan berkabut...") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             minLines = 3
         )
 
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Inspiration Chips
+        Text(text = "💡 Inspirasi Video Cepat:", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            videoInspirations.forEach { insp ->
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { videoPrompt = insp.substringAfter(" ") }
+                ) {
+                    Text(
+                        text = insp.take(38) + "...",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(12.dp))
 
         // Camera Motion Presets
-        Text(text = "Gerakan Kamera (Camera Motion):", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = "Gerakan Kamera (Camera Motion):", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
         Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = Modifier
@@ -775,7 +862,7 @@ fun VideoStudioTab() {
                 val isSelected = cameraMotion == motion
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = if (isSelected) ElectricCyan else MaterialTheme.colorScheme.surfaceVariant,
+                    color = if (isSelected) primaryColor else MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
                         .clickable { cameraMotion = motion }
@@ -784,7 +871,7 @@ fun VideoStudioTab() {
                         text = motion,
                         fontSize = 11.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurface,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                     )
                 }
@@ -793,123 +880,212 @@ fun VideoStudioTab() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Settings (Duration & FPS)
+        // Duration & FPS
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Durasi: ${videoLengthSec}s", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
-            Text("Framerate: ${fps} FPS (4K Cinema)", fontSize = 12.sp, color = EmeraldGreen, fontWeight = FontWeight.Bold)
+            Text("Durasi: ${videoLengthSec}s", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+            Text("Framerate: ${fps} FPS (4K Cinema)", fontSize = 12.sp, color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold)
         }
         Slider(
             value = videoLengthSec.toFloat(),
             onValueChange = { videoLengthSec = it.toInt() },
-            valueRange = 3f..15f,
-            steps = 11
+            valueRange = 3f..12f,
+            steps = 8
         )
 
         Spacer(modifier = Modifier.height(10.dp))
 
         Button(
-            onClick = {
-                if (videoPrompt.isNotBlank()) {
-                    isRendering = true
-                    generatedVideoTitle = if (videoMode == "T2V") "Text-to-Video: $videoPrompt" else "Image-to-Video: $videoPrompt"
-                    isPlaying = true
-                    isRendering = false
-                    Toast.makeText(context, "Rendering video selesai! Memulai playback sinematik.", Toast.LENGTH_SHORT).show()
-                }
-            },
+            onClick = { executeVideoRender() },
             enabled = videoPrompt.isNotBlank() && !isRendering,
-            colors = ButtonDefaults.buttonColors(containerColor = NeonViolet),
+            colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(Icons.Default.Movie, contentDescription = null, tint = Color.White)
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = if (videoMode == "T2V") "Render Video AI (Text to Video)" else "Animasikan Gambar (Image to Video)",
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
+            if (isRendering) {
+                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Merender Video AI ($cameraMotion)...", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+            } else {
+                Icon(Icons.Default.Movie, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Render Video AI (Free Model)", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // Generated Video Player Preview Card
+        if (generatedVideoResult != null) {
+            val vRes = generatedVideoResult!!
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Video Player Simulator
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, NeonViolet.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
-        ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("🎬 Video Player Preview", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    Text("Kamera: $cameraMotion", fontSize = 11.sp, color = ElectricCyan)
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(
-                                    Color(0xFF090D16),
-                                    Color(0xFF1E1B4B),
-                                    Color(0xFF0F172A)
-                                )
-                            )
-                        )
-                        .border(1.dp, Color(0xFF334155), RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(16.dp)
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(if (isPlaying) "🎞️ [Playing 4K Video]" else "🎬 [Video Ready]", fontSize = 28.sp)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = generatedVideoTitle ?: "Video hasil sintesis akan diputar di sini.",
-                            fontSize = 12.sp,
-                            color = NeonViolet,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = "${videoLengthSec}s • $fps FPS • Motion Vector Sync",
-                            fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        Column {
+                            Text(
+                                text = "🎬 Video AI: ${vRes.modelName}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Kamera: ${vRes.cameraMotion} • ${vRes.durationSec}s @ ${vRes.fps}fps",
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Live Keyframe / Video Surface
+                    val activeFrameUrl = if (vRes.keyframeUrls.isNotEmpty()) {
+                        vRes.keyframeUrls[currentFrameIndex.coerceIn(0, vRes.keyframeUrls.size - 1)]
+                    } else vRes.videoPreviewUrl
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .data(activeFrameUrl)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = vRes.prompt,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Play/Pause Controller
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        // Playback Overlay Controls
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .background(Color.Black.copy(alpha = 0.6f))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
-                            IconButton(
-                                onClick = { isPlaying = !isPlaying },
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
-                                    .background(ElectricCyan)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                    contentDescription = "Play/Pause",
-                                    tint = Color.Black
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(
+                                        onClick = { isPlaying = !isPlaying },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            contentDescription = "Play/Pause",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = if (isPlaying) "▶ Memutar Motion Sequence" else "⏸ Dijeda",
+                                        fontSize = 11.sp,
+                                        color = Color.White
+                                    )
+                                }
+
+                                Text(
+                                    text = "Frame ${currentFrameIndex + 1}/${vRes.keyframeUrls.size.coerceAtLeast(1)}",
+                                    fontSize = 10.sp,
+                                    color = Color.White.copy(alpha = 0.8f)
                                 )
                             }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "\"${vRes.prompt}\"",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Save Video to Gallery Button
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        Toast.makeText(context, "Menyimpan video ke Galeri HP...", Toast.LENGTH_SHORT).show()
+                                        val saveResult = videoEngine.saveVideoToGallery(vRes.videoPreviewUrl, vRes.prompt)
+                                        if (saveResult.isSuccess) {
+                                            Toast.makeText(context, "✅ Berhasil disimpan ke Galeri HP (Pictures/NusantaraAI_Videos)!", Toast.LENGTH_LONG).show()
+                                        } else {
+                                            Toast.makeText(context, "Gagal menyimpan: ${saveResult.exceptionOrNull()?.localizedMessage}", Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Download, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(15.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Simpan Galeri", fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                            }
+
+                            // Send to Chat Stream
+                            Button(
+                                onClick = {
+                                    onGenerate("🎬 [Text-to-Video (${vRes.modelName}, Kamera ${vRes.cameraMotion})]: ${vRes.prompt}\n[VIDEO_URL]: ${vRes.videoPreviewUrl}")
+                                    Toast.makeText(context, "Video dikirim ke riwayat obrolan AI!", Toast.LENGTH_SHORT).show()
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.size(15.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Kirim ke Chat", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        // Copy Link Button
+                        Button(
+                            onClick = {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                clipboard.setPrimaryClip(ClipData.newPlainText("Video URL", vRes.videoPreviewUrl))
+                                Toast.makeText(context, "Tautan video sinematik disalin!", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Salin URL Video Resolusi Penuh", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
                 }
