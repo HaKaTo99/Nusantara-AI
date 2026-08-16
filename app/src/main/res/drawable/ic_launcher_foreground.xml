@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Left Garuda Cyber Wing -->
+    <path
+        android:pathData="M24,34 L38,44 L32,60 L20,48 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="20"
+                android:startY="34"
+                android:endX="38"
+                android:endY="60"
+                android:type="linear">
+                <item android:color="#00F2FE" android:offset="0.0" />
+                <item android:color="#00FFA3" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:pathData="M18,48 L32,60 L28,72 L16,60 Z"
+        android:fillColor="#FFB300" />
+    <path
+        android:pathData="M34,42 L46,50 L42,66 L30,58 Z"
+        android:fillColor="#FFD700" />
+
+    <!-- Right Garuda Cyber Wing -->
+    <path
+        android:pathData="M84,34 L70,44 L76,60 L88,48 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="88"
+                android:startY="34"
+                android:endX="70"
+                android:endY="60"
+                android:type="linear">
+                <item android:color="#00F2FE" android:offset="0.0" />
+                <item android:color="#00FFA3" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:pathData="M90,48 L76,60 L80,72 L92,60 Z"
+        android:fillColor="#FFB300" />
+    <path
+        android:pathData="M74,42 L62,50 L66,66 L78,58 Z"
+        android:fillColor="#FFD700" />
+
+    <!-- Central Neural Diamond Network Core -->
+    <path
+        android:strokeWidth="2.0"
+        android:pathData="M54,32 L68,48 L54,68 L40,48 Z">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="40"
+                android:startY="32"
+                android:endX="68"
+                android:endY="68"
+                android:type="linear">
+                <item android:color="#00F2FE" android:offset="0.0" />
+                <item android:color="#FFD700" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Inner Quantum Geometry Lines -->
+    <path
+        android:strokeWidth="1.2"
+        android:strokeColor="#00F2FE"
+        android:pathData="M54,32 L54,68 M40,48 L68,48 M46,40 L62,56 M62,40 L46,56" />
+
+    <!-- Center AI Spark -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,44 L56,47 L60,48 L56,49 L54,52 L52,49 L48,48 L52,47 Z" />
+
+    <!-- Garuda Tail Feathers -->
+    <path
+        android:pathData="M50,70 L54,82 L46,78 Z"
+        android:fillColor="#FFD700" />
+    <path
+        android:pathData="M58,70 L54,82 L62,78 Z"
+        android:fillColor="#FFB300" />
+    <path
+        android:pathData="M54,72 L54,84 L50,80 Z"
+        android:fillColor="#00F2FE" />
+</vector>
