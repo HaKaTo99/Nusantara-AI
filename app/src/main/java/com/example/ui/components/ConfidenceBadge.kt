@@ -1,19 +1,13 @@
 package com.example.ui.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -36,10 +30,10 @@ import kotlinx.coroutines.delay
 /**
  * Badge kecil yang menampilkan skor kepercayaan (confidence) respons AI.
  *
- * Rentang warna:
- * - 🔴 < 50%  → Merah (Tebakan)
- * - 🟡 50-79% → Kuning (Sedang)
- * - 🟢 ≥ 80%  → Hijau (Tinggi)
+ * Rentang warna adaptif:
+ * - 🔴 < 50%  → Merah
+ * - 🟡 50-79% → Amber
+ * - 🟢 ≥ 80%  → Hijau
  */
 @Composable
 fun ConfidenceBadge(
@@ -49,7 +43,6 @@ fun ConfidenceBadge(
 ) {
     var displayedScore by remember { mutableIntStateOf(0) }
 
-    // Animasikan counter dari 0 ke score target
     LaunchedEffect(score) {
         displayedScore = 0
         val step = if (score > 0) score / 15 else 1
@@ -59,10 +52,12 @@ fun ConfidenceBadge(
         }
     }
 
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+
     val targetColor = when {
-        score >= 80 -> Color(0xFF22C55E) // Hijau
-        score >= 50 -> Color(0xFFF59E0B) // Kuning
-        else        -> Color(0xFFEF4444) // Merah
+        score >= 80 -> if (isDark) Color(0xFF00FFA3) else Color(0xFF047857) // Deep Emerald in Light Mode
+        score >= 50 -> if (isDark) Color(0xFFFFB300) else Color(0xFFB45309) // Deep Amber in Light Mode
+        else        -> if (isDark) Color(0xFFFF5252) else Color(0xFFDC2626) // Deep Red in Light Mode
     }
 
     val dotColor by animateColorAsState(
@@ -80,7 +75,7 @@ fun ConfidenceBadge(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
-            .background(dotColor.copy(alpha = 0.12f))
+            .background(dotColor.copy(alpha = if (isDark) 0.16f else 0.12f))
             .padding(horizontal = 8.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -94,14 +89,14 @@ fun ConfidenceBadge(
         Text(
             text = "$displayedScore%",
             fontSize = 10.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Bold,
             color = dotColor
         )
         if (showLabel) {
             Text(
-                text = "· $label",
-                fontSize = 10.sp,
-                color = dotColor.copy(alpha = 0.75f)
+                text = "($label)",
+                fontSize = 9.sp,
+                color = dotColor.copy(alpha = 0.9f)
             )
         }
     }

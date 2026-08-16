@@ -1,6 +1,5 @@
 package com.example.ui.screens
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,12 +23,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.SmartToy
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,9 +59,6 @@ import com.example.ui.components.ChainOfThoughtView
 import com.example.ui.components.CodeArtifactView
 import com.example.ui.components.ConfidenceBadge
 import com.example.ui.components.VoiceWaveVisualizer
-import com.example.ui.theme.ElectricCyan
-import com.example.ui.theme.EmeraldGreen
-import com.example.ui.theme.NeonViolet
 
 @Composable
 fun ChatScreen(
@@ -91,6 +87,9 @@ fun ChatScreen(
         "🌐 Terjemahkan teks ke 50+ bahasa"
     )
 
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+    val primaryColor = MaterialTheme.colorScheme.primary
+
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
@@ -104,7 +103,8 @@ fun ChatScreen(
     ) {
         // Active Persona Banner
         Surface(
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 2.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -137,7 +137,7 @@ fun ChatScreen(
 
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = ElectricCyan.copy(alpha = 0.15f),
+                    color = primaryColor.copy(alpha = if (isDark) 0.18f else 0.12f),
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
                         .clickable { onNewChat() }
@@ -150,7 +150,7 @@ fun ChatScreen(
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "New Chat",
-                            tint = ElectricCyan,
+                            tint = primaryColor,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
@@ -158,7 +158,7 @@ fun ChatScreen(
                             text = "Obrolan Baru",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = ElectricCyan
+                            color = primaryColor
                         )
                     }
                 }
@@ -196,19 +196,20 @@ fun ChatScreen(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(ElectricCyan.copy(alpha = 0.2f)),
+                                .background(primaryColor.copy(alpha = 0.2f)),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
                                 strokeWidth = 2.dp,
-                                color = ElectricCyan
+                                color = primaryColor
                             )
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = "Nusantara AI sedang menalar...",
                             fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -236,10 +237,15 @@ fun ChatScreen(
             quickPrompts.forEach { prompt ->
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    color = MaterialTheme.colorScheme.surface,
                     modifier = Modifier
                         .padding(horizontal = 4.dp)
                         .clip(RoundedCornerShape(16.dp))
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = if (isDark) 0.3f else 0.6f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
                         .clickable {
                             inputText = prompt.substringAfter(" ")
                             onSendMessage(prompt.substringAfter(" "))
@@ -249,6 +255,7 @@ fun ChatScreen(
                     Text(
                         text = prompt,
                         fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                     )
@@ -274,7 +281,8 @@ fun ChatScreen(
                     placeholder = {
                         Text(
                             text = if (isListening) "Mendengarkan suara Anda..." else "Tanyakan apa saja ke Nusantara AI...",
-                            fontSize = 13.sp
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     modifier = Modifier
@@ -282,8 +290,12 @@ fun ChatScreen(
                         .testTag("chat_input_field"),
                     shape = RoundedCornerShape(24.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ElectricCyan,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedBorderColor = primaryColor,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     ),
                     maxLines = 4
                 )
@@ -307,7 +319,7 @@ fun ChatScreen(
                     Icon(
                         imageVector = if (isListening) Icons.Default.MicOff else Icons.Default.Mic,
                         contentDescription = "Voice Input",
-                        tint = if (isListening) Color(0xFFFF5252) else ElectricCyan,
+                        tint = if (isListening) Color(0xFFFF5252) else primaryColor,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -327,7 +339,7 @@ fun ChatScreen(
                         .size(42.dp)
                         .clip(CircleShape)
                         .background(
-                            if (inputText.isNotBlank()) ElectricCyan
+                            if (inputText.isNotBlank()) primaryColor
                             else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         )
                         .testTag("send_message_button")
@@ -335,7 +347,7 @@ fun ChatScreen(
                     Icon(
                         imageVector = Icons.Default.ArrowUpward,
                         contentDescription = "Send",
-                        tint = if (inputText.isNotBlank()) Color.Black else Color.Gray,
+                        tint = if (inputText.isNotBlank()) MaterialTheme.colorScheme.onPrimary else Color.Gray,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -361,6 +373,11 @@ fun ChatMessageItem(
         message.content.substringAfter("```").substringBefore("\n").trim().ifBlank { "HTML" }
     } else "HTML"
 
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val emeraldColor = if (isDark) Color(0xFF00FFA3) else Color(0xFF047857)
+    val amberColor = if (isDark) Color(0xFFFFB300) else Color(0xFFB45309)
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
@@ -372,7 +389,7 @@ fun ChatMessageItem(
                     .clip(CircleShape)
                     .background(
                         androidx.compose.ui.graphics.Brush.linearGradient(
-                            listOf(ElectricCyan, NeonViolet)
+                            listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
                         )
                     ),
                 contentAlignment = Alignment.Center
@@ -380,7 +397,7 @@ fun ChatMessageItem(
                 Icon(
                     imageVector = Icons.Default.SmartToy,
                     contentDescription = "AI",
-                    tint = Color.Black,
+                    tint = Color.White,
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -401,12 +418,12 @@ fun ChatMessageItem(
                     bottomEnd = if (isUser) 4.dp else 16.dp
                 ),
                 color = if (isUser) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surfaceVariant,
+                        else MaterialTheme.colorScheme.surface,
                 modifier = Modifier
                     .border(
                         width = 1.dp,
-                        color = if (isUser) ElectricCyan.copy(alpha = 0.3f)
-                                else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                        color = if (isUser) primaryColor.copy(alpha = if (isDark) 0.3f else 0.4f)
+                                else MaterialTheme.colorScheme.outline.copy(alpha = if (isDark) 0.25f else 0.6f),
                         shape = RoundedCornerShape(
                             topStart = 16.dp,
                             topEnd = 16.dp,
@@ -461,6 +478,7 @@ fun ChatMessageItem(
                     Text(
                         text = "${message.modelUsed} • ${message.tokenCount} tok • ${message.latencyMs}ms",
                         fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.width(6.dp))
@@ -469,9 +487,9 @@ fun ChatMessageItem(
                         modifier = Modifier.size(18.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.VolumeUp,
+                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                             contentDescription = "Dengarkan Suara",
-                            tint = ElectricCyan,
+                            tint = primaryColor,
                             modifier = Modifier.size(14.dp)
                         )
                     }
@@ -479,7 +497,8 @@ fun ChatMessageItem(
                     Text(
                         text = if (message.syncStatus == "SYNCED") "✓ Tersinkronisasi" else "⏳ Antrean Offline",
                         fontSize = 10.sp,
-                        color = if (message.syncStatus == "SYNCED") EmeraldGreen else Color(0xFFFFB300)
+                        fontWeight = FontWeight.Bold,
+                        color = if (message.syncStatus == "SYNCED") emeraldColor else amberColor
                     )
                 }
             }
