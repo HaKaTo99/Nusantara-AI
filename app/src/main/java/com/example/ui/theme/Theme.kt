@@ -29,15 +29,15 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF007A99),
+    primary = LightPrimaryCyan,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD6F3FF),
-    onPrimaryContainer = Color(0xFF001F29),
-    secondary = Color(0xFF6A1B9A),
+    primaryContainer = Color(0xFFE0F2FE),
+    onPrimaryContainer = Color(0xFF0369A1),
+    secondary = LightSecondaryViolet,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFF3E5F5),
-    onSecondaryContainer = Color(0xFF2A004E),
-    tertiary = Color(0xFF008955),
+    secondaryContainer = Color(0xFFF3E8FF),
+    onSecondaryContainer = Color(0xFF581C87),
+    tertiary = LightEmeraldGreen,
     onTertiary = Color.White,
     background = LightBackground,
     onBackground = LightTextPrimary,
@@ -46,7 +46,7 @@ private val LightColorScheme = lightColorScheme(
     surfaceVariant = LightSurfaceVariant,
     onSurfaceVariant = LightTextSecondary,
     outline = LightCardBorder,
-    error = CoralError
+    error = LightCoralError
 )
 
 @Composable

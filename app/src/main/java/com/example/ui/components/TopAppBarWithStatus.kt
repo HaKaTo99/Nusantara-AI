@@ -9,6 +9,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,15 +18,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,11 +50,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.sync.SyncState
-import com.example.ui.theme.ElectricCyan
-import com.example.ui.theme.EmeraldGreen
-import com.example.ui.theme.NeonViolet
-
-import androidx.compose.material.icons.filled.Speed
 
 @Composable
 fun TopAppBarWithStatus(
@@ -77,30 +78,42 @@ fun TopAppBarWithStatus(
         label = "pulseAlpha"
     )
 
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+
+    val emeraldTint = if (isDark) Color(0xFF00FFA3) else Color(0xFF047857)
+    val amberTint = if (isDark) Color(0xFFFFB300) else Color(0xFFB45309)
+    val primaryTint = MaterialTheme.colorScheme.primary
+
     Surface(
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp,
-        modifier = modifier.fillMaxWidth()
+        tonalElevation = 4.dp,
+        modifier = modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp)
+                .padding(horizontal = 14.dp, vertical = 8.dp)
         ) {
+            // ── Row 1: Brand Title, Mode Status Pill & Core Action Buttons ──
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Brand Title & Status Pill
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                // Left: Brand Logo & Title
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
                     Box(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(
                                 androidx.compose.ui.graphics.Brush.linearGradient(
-                                    listOf(ElectricCyan, MaterialTheme.colorScheme.secondary)
+                                    listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
                                 )
                             ),
                         contentAlignment = Alignment.Center
@@ -108,12 +121,12 @@ fun TopAppBarWithStatus(
                         Text(
                             text = "N",
                             fontWeight = FontWeight.Black,
-                            fontSize = 18.sp,
-                            color = Color.Black
+                            fontSize = 17.sp,
+                            color = Color.White
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -121,35 +134,36 @@ fun TopAppBarWithStatus(
                                 text = "Nusantara AI",
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 17.sp
-                                )
+                                    fontSize = 16.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             // Mode Pill
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
+                                    .clip(RoundedCornerShape(10.dp))
                                     .background(
-                                        if (isOnline) EmeraldGreen.copy(alpha = 0.15f)
-                                        else Color(0xFFFFB300).copy(alpha = 0.15f)
+                                        if (isOnline) emeraldTint.copy(alpha = if (isDark) 0.18f else 0.12f)
+                                        else amberTint.copy(alpha = if (isDark) 0.18f else 0.12f)
                                     )
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Box(
                                         modifier = Modifier
-                                            .size(6.dp)
+                                            .size(5.dp)
                                             .clip(CircleShape)
-                                            .background(if (isOnline) EmeraldGreen else Color(0xFFFFB300))
+                                            .background(if (isOnline) emeraldTint else amberTint)
                                             .alpha(if (isOnline) 1f else pulseAlpha)
                                     )
-                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Spacer(modifier = Modifier.width(3.dp))
                                     Text(
-                                        text = if (modePreference == "OFFLINE") "Offline Mode"
+                                        text = if (modePreference == "OFFLINE") "Offline"
                                                else if (isOnline) "Hybrid Online" else "Offline Fallback",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = if (isOnline) EmeraldGreen else Color(0xFFFFB300)
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isOnline) emeraldTint else amberTint
                                     )
                                 }
                             }
@@ -157,116 +171,65 @@ fun TopAppBarWithStatus(
 
                         Text(
                             text = "E2EE Zero-Log Guaranteed",
-                            fontSize = 11.sp,
+                            fontSize = 10.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
-                // Action Icons: E2EE Shield, Sync, Model Tune, Settings
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Security Shield
+                // Right: Essential Action Buttons (Vault, Sync, Settings)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    // Security Vault Button
                     IconButton(
                         onClick = onSecurityClick,
-                        modifier = Modifier.testTag("security_badge_button")
+                        modifier = Modifier
+                            .size(34.dp)
+                            .testTag("security_badge_button")
                     ) {
                         Icon(
                             imageVector = Icons.Default.Lock,
                             contentDescription = "Security Vault",
-                            tint = EmeraldGreen,
-                            modifier = Modifier.size(20.dp)
+                            tint = emeraldTint,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
 
                     // Sync Button
                     IconButton(
                         onClick = onSyncClick,
-                        modifier = Modifier.testTag("sync_action_button")
+                        modifier = Modifier
+                            .size(34.dp)
+                            .testTag("sync_action_button")
                     ) {
                         Icon(
                             imageVector = if (isOnline) Icons.Default.CloudDone else Icons.Default.CloudOff,
                             contentDescription = "Sync Data",
-                            tint = if (isOnline) ElectricCyan else Color(0xFFFFB300),
-                            modifier = Modifier.size(20.dp)
+                            tint = if (isOnline) primaryTint else amberTint,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
 
-                    // Diagnostics NPU Button
-                    if (onDiagnosticsClick != null) {
-                        IconButton(
-                            onClick = onDiagnosticsClick,
-                            modifier = Modifier.testTag("npu_diagnostics_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Speed,
-                                contentDescription = "Diagnostik NPU",
-                                tint = ElectricCyan,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-
-                    // Mesh Intelligence P2P Button
-                    if (onMeshClick != null) {
-                        IconButton(
-                            onClick = onMeshClick,
-                            modifier = Modifier.testTag("mesh_network_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Jaringan Mesh AI",
-                                tint = EmeraldGreen,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-
-                    // Phase 4 Enterprise & Swarm Hub Button
-                    if (onEnterpriseClick != null) {
-                        IconButton(
-                            onClick = onEnterpriseClick,
-                            modifier = Modifier.testTag("enterprise_hub_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Tune,
-                                contentDescription = "Enterprise & Swarm Hub",
-                                tint = ElectricCyan,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-
-                    // Phase 5 Sovereign AGI & Decentralized Hub Button
-                    if (onSovereignAGIClick != null) {
-                        IconButton(
-                            onClick = onSovereignAGIClick,
-                            modifier = Modifier.testTag("sovereign_agi_hub_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = "Sovereign AGI Hub",
-                                tint = NeonViolet,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-
-                    // Settings
+                    // Settings Button
                     IconButton(
                         onClick = onSettingsClick,
-                        modifier = Modifier.testTag("settings_button")
+                        modifier = Modifier
+                            .size(34.dp)
+                            .testTag("settings_button")
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "Pengaturan",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
             }
 
-            // Sub-bar: Active Model Chip (Clickable) & Sync Progress
+            // ── Row 2: Model Selector Pill & Specialized Hub Badges Strip ──
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -274,51 +237,145 @@ fun TopAppBarWithStatus(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Model Selector Pill
+                // Active Model Selector Pill (Clickable)
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .clickable { onModelClick() }
                         .testTag("model_selector_chip")
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = Icons.Default.Tune,
                             contentDescription = "Pilih Model",
-                            tint = ElectricCyan,
-                            modifier = Modifier.size(14.dp)
+                            tint = primaryTint,
+                            modifier = Modifier.size(13.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = selectedModel,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
 
-                // Sync status label
-                AnimatedVisibility(visible = syncState is SyncState.Syncing) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Syncing",
-                            tint = ElectricCyan,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Menyinkronkan data...",
-                            fontSize = 11.sp,
-                            color = ElectricCyan
-                        )
+                // Specialized Hub Shortcut Chips (Scrollable row)
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Diagnostics NPU
+                    if (onDiagnosticsClick != null) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onDiagnosticsClick() }
+                                .testTag("npu_diagnostics_button")
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Speed, contentDescription = null, tint = primaryTint, modifier = Modifier.size(12.dp))
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text("NPU", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = primaryTint)
+                            }
+                        }
                     }
+
+                    // Mesh P2P
+                    if (onMeshClick != null) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onMeshClick() }
+                                .testTag("mesh_network_button")
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Hub, contentDescription = null, tint = emeraldTint, modifier = Modifier.size(12.dp))
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text("Mesh", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = emeraldTint)
+                            }
+                        }
+                    }
+
+                    // Enterprise Swarm
+                    if (onEnterpriseClick != null) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onEnterpriseClick() }
+                                .testTag("enterprise_hub_button")
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Tune, contentDescription = null, tint = primaryTint, modifier = Modifier.size(12.dp))
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text("Swarm", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = primaryTint)
+                            }
+                        }
+                    }
+
+                    // Sovereign AGI
+                    if (onSovereignAGIClick != null) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onSovereignAGIClick() }
+                                .testTag("sovereign_agi_hub_button")
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Psychology, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(12.dp))
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text("AGI", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Syncing indicator bar if active
+            AnimatedVisibility(visible = syncState is SyncState.Syncing) {
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Syncing",
+                        tint = primaryTint,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Menyinkronkan data terenkripsi...",
+                        fontSize = 10.sp,
+                        color = primaryTint
+                    )
                 }
             }
         }
