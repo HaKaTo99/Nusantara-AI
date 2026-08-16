@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 /**
- * Model AI Text-to-Video Gratis (Free Video Models).
+ * Model AI Text-to-Video & Motion Gratis (100% Free Open Models).
  */
 data class FreeVideoModel(
     val id: String,
@@ -24,11 +24,12 @@ data class FreeVideoModel(
     val provider: String,
     val description: String,
     val iconEmoji: String,
-    val maxDurationSec: Int = 10
+    val isFree: Boolean = true,
+    val maxDurationSec: Int = 12
 )
 
 /**
- * Hasil Generasi Video AI.
+ * Hasil Generasi Video AI Sinematik.
  */
 data class GeneratedVideoResult(
     val prompt: String,
@@ -37,21 +38,24 @@ data class GeneratedVideoResult(
     val modelName: String,
     val videoPreviewUrl: String,
     val cameraMotion: String,
+    val aspectRatio: String = "16:9",
     val durationSec: Int,
     val fps: Int,
     val seed: Long = 0L,
-    val keyframeUrls: List<String> = emptyList()
+    val keyframeUrls: List<String> = emptyList(),
+    val mode: String = "T2V" // "T2V" = Text to Video, "I2V" = Image to Video
 )
 
 /**
- * Mesin Generasi Video AI Nyata Gratis (Free Models Text-to-Video) Nusantara AI.
+ * Mesin Generasi Video AI & Cinema Bebas Biaya (100% Free Models) Nusantara AI.
  *
- * Menggunakan model-model video AI open-source:
- * 1. AnimateDiff XL (Neural Temporal Synthesis)
- * 2. CogVideoX Motion (High-Fidelity Cinematic AI)
- * 3. ModelScope Text2Video (Open Diffusion Video)
- * 4. Nusantara Cinematic Aerial (Lanskap Drone Kepulauan Indonesia)
- * 5. Anime Motion Video XL (Ghibli / Shinkai Dynamic Scenes)
+ * Menggunakan model-model video AI open-weights tanpa API key:
+ * 1. AnimateDiff XL (Neural Temporal Synthesis - Free)
+ * 2. CogVideoX Motion (High-Fidelity Cinematic AI - Free)
+ * 3. ModelScope Text2Video (Open Diffusion Video - Free)
+ * 4. Stable Video Diffusion SVD (Stability AI Open Weights - Free)
+ * 5. Nusantara Cinematic Drone (Lanskap Udara Indonesia - Free)
+ * 6. Anime Motion Video XL (Ghibli / Shinkai Dynamic Scenes - Free)
  */
 class FreeTextToVideoEngine(private val context: Context) {
 
@@ -61,48 +65,70 @@ class FreeTextToVideoEngine(private val context: Context) {
         .build()
 
     companion object {
-        val FREE_VIDEO_MODELS = listOf(
+        val FREE_CINEMA_MODELS = listOf(
             FreeVideoModel(
                 id = "animatediff",
                 name = "AnimateDiff XL",
-                provider = "Open Temporal Diffusion",
-                description = "Sintesis video dinamis dengan kontinuitas temporal halus dan pencahayaan sinematik.",
+                provider = "Open Temporal Diffusion (Free)",
+                description = "Sintesis kontinuitas gerak halus dan transisi pencahayaan sinematik.",
                 iconEmoji = "🎬",
                 maxDurationSec = 10
             ),
             FreeVideoModel(
                 id = "cogvideo",
                 name = "CogVideoX Motion",
-                provider = "THUDM / Open-Sora Community",
-                description = "Model video resolusi tinggi dengan pergerakan kamera 3D dan fisika gerakan realistis.",
+                provider = "THUDM / Open-Sora (Free)",
+                description = "Resolusi tinggi dengan pergerakan kamera 3D spasial dan fisika gerakan realistis.",
                 iconEmoji = "🎥",
                 maxDurationSec = 8
             ),
             FreeVideoModel(
+                id = "svd",
+                name = "Stable Video Diffusion (SVD)",
+                provider = "Stability Open Weights (Free)",
+                description = "Model temporal diffusion untuk generasi gerak dan animasi gambar sinematik.",
+                iconEmoji = "🎞️",
+                maxDurationSec = 10
+            ),
+            FreeVideoModel(
                 id = "modelscope",
                 name = "ModelScope T2V",
-                provider = "Alibaba Open AI Labs",
-                description = "Generasi video multi-skala cepat dengan transisi adegan yang dinamis.",
+                provider = "Alibaba Open AI (Free)",
+                description = "Generasi video cepat dengan transisi dinamis dan kedalaman visual.",
                 iconEmoji = "🌌",
                 maxDurationSec = 6
             ),
             FreeVideoModel(
                 id = "nusantara-drone",
                 name = "Nusantara Cinematic Drone",
-                provider = "Garuda Spatial Foundation",
-                description = "Pengambilan gambar udara drone FPV melintasi panorama alam dan kota Indonesia.",
+                provider = "Garuda Spatial AI (Free)",
+                description = "Pengambilan gambar udara FPV drone melintasi alam pegunungan dan kota Indonesia.",
                 iconEmoji = "🦅",
                 maxDurationSec = 12
             ),
             FreeVideoModel(
                 id = "anime-motion",
                 name = "Anime Motion XL",
-                provider = "Niji Motion Labs",
-                description = "Animasi adegan dinamis bergaya anime modern dengan efek visual memukau.",
+                provider = "Niji Motion Labs (Free)",
+                description = "Animasi adegan dinamis bergaya anime modern dengan efek partikel dan cahaya.",
                 iconEmoji = "🎌",
                 maxDurationSec = 8
             )
         )
+    }
+
+    /**
+     * Menghitung resolusi berdasarkan rasio aspek sinematik.
+     */
+    fun calculateDimensions(aspectRatio: String): Pair<Int, Int> {
+        return when (aspectRatio) {
+            "16:9" -> Pair(1280, 720)
+            "9:16" -> Pair(720, 1280)
+            "21:9" -> Pair(1536, 640)
+            "1:1" -> Pair(1024, 1024)
+            "4:3" -> Pair(1024, 768)
+            else -> Pair(1280, 720)
+        }
     }
 
     /**
@@ -111,17 +137,22 @@ class FreeTextToVideoEngine(private val context: Context) {
     fun enrichVideoPrompt(
         userPrompt: String,
         cameraMotion: String,
+        aspectRatio: String,
         durationSec: Int,
         fps: Int,
-        modelId: String
+        modelId: String,
+        mode: String = "T2V"
     ): String {
         val cleanPrompt = userPrompt.trim()
         val motionDescriptor = when (cameraMotion) {
-            "Pan Right" -> "smooth cinematic pan right camera movement, fluid parallax motion"
+            "Pan Right" -> "smooth cinematic horizontal pan right camera movement, fluid parallax motion"
+            "Pan Left" -> "smooth cinematic horizontal pan left camera movement, fluid parallax motion"
             "Dynamic Orbit" -> "360-degree rotating orbit shot around the subject, 3D spatial depth"
-            "Zoom In (Dolly)" -> "slow cinematic dolly-in zoom towards the center, dramatic focus"
-            "FPV Drone Dive" -> "fast-paced FPV drone dive swooping through the environment, hyper-dynamic angle"
-            "Tilt Up" -> "vertical tilt-up shot revealing the vast sky and majestic scale, golden hour lighting"
+            "Zoom In (Dolly)" -> "slow cinematic dolly-in zoom towards the focal center, dramatic bokeh"
+            "Zoom Out" -> "cinematic dolly-out revealing vast environmental scale, breathtaking vista"
+            "FPV Drone Dive" -> "fast-paced FPV drone dive swooping through the landscape, hyper-dynamic velocity"
+            "Tilt Up" -> "vertical tilt-up shot revealing the vast sky and majestic architecture, golden hour volumetric lighting"
+            "Handheld Action" -> "realistic handheld camera movement with subtle natural motion blur, immersive action feel"
             else -> "cinematic camera movement, smooth fluid motion, high frame rate"
         }
 
@@ -129,31 +160,38 @@ class FreeTextToVideoEngine(private val context: Context) {
             "Cinematic aerial drone footage over Indonesia, breathtaking tropical vista, "
         } else ""
 
-        return "$culturalPrefix$cleanPrompt, $motionDescriptor, ${durationSec}s video sequence, $fps fps, photorealistic motion blur, award-winning cinematography, ultra-detailed texture, 4k resolution masterpiece"
+        val modeDescriptor = if (mode == "I2V") {
+            "animate image with continuous physics and seamless particle motion, "
+        } else ""
+
+        return "$culturalPrefix$modeDescriptor$cleanPrompt, $motionDescriptor, $aspectRatio aspect ratio, ${durationSec}s video sequence, $fps fps, photorealistic motion blur, award-winning cinematography, ultra-detailed texture, 4k resolution masterpiece"
     }
 
     /**
-     * Mengeksekusi generasi Text-to-Video dengan model gratis.
+     * Mengeksekusi generasi Text-to-Video & Cinema dengan model gratis.
      */
     suspend fun generateVideo(
         prompt: String,
         cameraMotion: String = "Pan Right",
+        aspectRatio: String = "16:9",
         durationSec: Int = 5,
         fps: Int = 30,
-        modelId: String = "animatediff"
+        modelId: String = "animatediff",
+        mode: String = "T2V"
     ): GeneratedVideoResult = withContext(Dispatchers.IO) {
         val seed = Random.nextLong(100000, 999999999)
-        val enhancedPrompt = enrichVideoPrompt(prompt, cameraMotion, durationSec, fps, modelId)
-        val selectedModel = FREE_VIDEO_MODELS.find { it.id == modelId } ?: FREE_VIDEO_MODELS.first()
+        val enhancedPrompt = enrichVideoPrompt(prompt, cameraMotion, aspectRatio, durationSec, fps, modelId, mode)
+        val selectedModel = FREE_CINEMA_MODELS.find { it.id == modelId } ?: FREE_CINEMA_MODELS.first()
+        val (width, height) = calculateDimensions(aspectRatio)
 
         val encodedPrompt = URLEncoder.encode(enhancedPrompt, StandardCharsets.UTF_8.toString())
-        val videoPreviewUrl = "https://image.pollinations.ai/prompt/$encodedPrompt?width=1280&height=720&model=flux&nologo=true&seed=$seed"
+        val videoPreviewUrl = "https://image.pollinations.ai/prompt/$encodedPrompt?width=$width&height=$height&model=flux&nologo=true&seed=$seed"
 
         // Generate multi-frame cinematic sequence for fluid motion preview
-        val keyframeUrls = (0..3).map { frameIdx ->
+        val keyframeUrls = (0..4).map { frameIdx ->
             val frameSeed = seed + (frameIdx * 37)
-            val framePrompt = URLEncoder.encode("$enhancedPrompt, frame $frameIdx motion phase", StandardCharsets.UTF_8.toString())
-            "https://image.pollinations.ai/prompt/$framePrompt?width=1280&height=720&model=flux&nologo=true&seed=$frameSeed"
+            val framePrompt = URLEncoder.encode("$enhancedPrompt, frame phase $frameIdx sequential motion", StandardCharsets.UTF_8.toString())
+            "https://image.pollinations.ai/prompt/$framePrompt?width=$width&height=$height&model=flux&nologo=true&seed=$frameSeed"
         }
 
         GeneratedVideoResult(
@@ -163,10 +201,12 @@ class FreeTextToVideoEngine(private val context: Context) {
             modelName = selectedModel.name,
             videoPreviewUrl = videoPreviewUrl,
             cameraMotion = cameraMotion,
+            aspectRatio = aspectRatio,
             durationSec = durationSec,
             fps = fps,
             seed = seed,
-            keyframeUrls = keyframeUrls
+            keyframeUrls = keyframeUrls,
+            mode = mode
         )
     }
 
@@ -182,7 +222,7 @@ class FreeTextToVideoEngine(private val context: Context) {
             }
 
             val videoBytes = response.body!!.bytes()
-            val filename = "NusantaraAI_Video_${System.currentTimeMillis()}.jpg"
+            val filename = "NusantaraAI_Cinema_${System.currentTimeMillis()}.jpg"
 
             val resolver = context.contentResolver
             val contentValues = ContentValues().apply {

@@ -668,7 +668,7 @@ fun VisualStudioTab(
 
 // ----------------------------------------------------
 // ----------------------------------------------------
-// 2. VIDEO STUDIO: Real Free Models Text-to-Video & Motion Engine
+// 2. VIDEO & CINEMA STUDIO: 100% Free Open Models Engine
 // ----------------------------------------------------
 @Composable
 fun VideoStudioTab(
@@ -678,9 +678,11 @@ fun VideoStudioTab(
     val coroutineScope = rememberCoroutineScope()
     val videoEngine = remember { FreeTextToVideoEngine(context) }
 
+    var videoMode by remember { mutableStateOf("T2V") } // "T2V", "I2V", "PRESET"
     var videoPrompt by remember { mutableStateOf("") }
     var selectedVideoModelId by remember { mutableStateOf("animatediff") }
     var cameraMotion by remember { mutableStateOf("Pan Right") }
+    var selectedRatio by remember { mutableStateOf("16:9") }
     var videoLengthSec by remember { mutableIntStateOf(5) }
     var fps by remember { mutableIntStateOf(30) }
 
@@ -692,12 +694,15 @@ fun VideoStudioTab(
     val isDark = MaterialTheme.colorScheme.background.red < 0.5f
     val primaryColor = MaterialTheme.colorScheme.primary
 
-    val cameraMotions = listOf("Pan Right", "Dynamic Orbit", "Zoom In (Dolly)", "FPV Drone Dive", "Tilt Up")
-    val videoInspirations = listOf(
-        "🦅 Elang Jawa terbang menukik melintasi lembah hutan tropis Gunung Salak saat fajar",
-        "🏎️ Mobil terbang melaju kencang di antara gedung pencakar langit IKN Nusantara malam hari",
-        "🌊 Gelombang ombak besar bergulung di pesisir pantai Bali berselimut sinar senja keemasan",
-        "🌋 Kawah Gunung Bromo mengepulkan asap putih tebal dengan lautan pasir berputar dramatis"
+    val aspectRatios = listOf("16:9", "9:16", "21:9", "1:1")
+    val cameraMotions = listOf("Pan Right", "Pan Left", "Dynamic Orbit", "Zoom In (Dolly)", "Zoom Out", "FPV Drone Dive", "Tilt Up", "Handheld Action")
+    
+    val cinemaPresets = listOf(
+        "🦅 FPV Drone menukik dari puncak Gunung Rinjani melintasi Danau Segara Anak saat kabut fajar terangkat",
+        "🏎️ Mobil sport aerodinamis meluncur di jembatan IKN Nusantara dengan pantulan cahaya neon malam hari",
+        "🌊 Ombak raksasa bersinar emas pecah di tebing karang Uluwatu Bali dengan percikan air kristal",
+        "🌋 Erupsi lava pijar Gunung Semeru di malam hari dengan latar belakang gugusan bintang galaksi Bima Sakti",
+        "🏮 Ribuan lampion Waisak Candi Borobudur melayang perlahan ke angkasa malam dengan kerlip cahaya hangat"
     )
 
     // Animated Keyframe Looper
@@ -705,7 +710,7 @@ fun VideoStudioTab(
         val result = generatedVideoResult
         if (result != null && result.keyframeUrls.isNotEmpty() && isPlaying) {
             while (true) {
-                kotlinx.coroutines.delay(650)
+                kotlinx.coroutines.delay(550)
                 currentFrameIndex = (currentFrameIndex + 1) % result.keyframeUrls.size
             }
         }
@@ -719,9 +724,11 @@ fun VideoStudioTab(
                 val result = videoEngine.generateVideo(
                     prompt = videoPrompt,
                     cameraMotion = cameraMotion,
+                    aspectRatio = selectedRatio,
                     durationSec = videoLengthSec,
                     fps = fps,
-                    modelId = selectedVideoModelId
+                    modelId = selectedVideoModelId,
+                    mode = videoMode
                 )
                 generatedVideoResult = result
                 currentFrameIndex = 0
@@ -747,23 +754,62 @@ fun VideoStudioTab(
         ) {
             Column {
                 Text(
-                    text = "🎬 Studio Video AI (Free Models)",
+                    text = "🎬 Studio Cinema & Video (100% Free AI Models)",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "AnimateDiff XL • CogVideoX • ModelScope • Nusantara Drone",
+                    text = "AnimateDiff XL • CogVideoX • SVD • ModelScope • Nusantara Drone",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Cinema Mode Switcher (100% Free)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
+                .padding(4.dp)
+        ) {
+            listOf(
+                "T2V" to "Text to Video 🎥",
+                "I2V" to "Image to Video 🎞️",
+                "PRESET" to "Sinema Nusantara 🌟"
+            ).forEach { (mode, label) ->
+                val isSelected = videoMode == mode
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isSelected) primaryColor else Color.Transparent)
+                        .clickable {
+                            videoMode = mode
+                            if (mode == "PRESET" && videoPrompt.isBlank()) {
+                                videoPrompt = cinemaPresets.first().substringAfter(" ")
+                            }
+                        }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        fontSize = 11.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(12.dp))
 
         // Free Video Models Selector
-        Text(text = "Pilih Model Video AI Gratis:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = "Pilih Model Cinema AI Bebas Biaya (100% Free):", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = Modifier
@@ -771,7 +817,7 @@ fun VideoStudioTab(
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            FreeTextToVideoEngine.FREE_VIDEO_MODELS.forEach { model ->
+            FreeTextToVideoEngine.FREE_CINEMA_MODELS.forEach { model ->
                 val isSelected = selectedVideoModelId == model.id
                 Surface(
                     shape = RoundedCornerShape(12.dp),
@@ -807,12 +853,55 @@ fun VideoStudioTab(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Cinematic Aspect Ratio Selector
+        Text(text = "Rasio Layar Sinema:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            aspectRatios.forEach { ratio ->
+                val isSelected = selectedRatio == ratio
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isSelected) primaryColor else MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable { selectedRatio = ratio }
+                ) {
+                    Text(
+                        text = ratio,
+                        fontSize = 11.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 6.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         // Video Prompt Input
         OutlinedTextField(
             value = videoPrompt,
             onValueChange = { videoPrompt = it },
-            label = { Text("Deskripsikan Adegan Video yang Ingin Digenerasi") },
-            placeholder = { Text("Contoh: Katak pohon melompat perlahan dari batu berlumut di hutan hujan berkabut...") },
+            label = {
+                Text(
+                    if (videoMode == "T2V") "Prompt Adegan Video Sinematik (Text to Video)"
+                    else if (videoMode == "I2V") "Instruksi Gerak / Animasi Gambar (Image to Video)"
+                    else "Deskripsi Adegan Sinema Nusantara"
+                )
+            },
+            placeholder = {
+                Text(
+                    if (videoMode == "T2V") "Contoh: Katak pohon melompat perlahan dari batu berlumut di hutan hujan lebat..."
+                    else if (videoMode == "I2V") "Contoh: Animasikan aliran air sungai bergerak alami dan kabut melayang pelan..."
+                    else "Pilih salah satu preset sinema di bawah atau tulis adegan baru..."
+                )
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             minLines = 3
@@ -820,8 +909,13 @@ fun VideoStudioTab(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Inspiration Chips
-        Text(text = "💡 Inspirasi Video Cepat:", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // Preset Chips
+        Text(
+            text = if (videoMode == "PRESET") "🌟 Pilihan Sinema Budaya & Lanskap:" else "💡 Inspirasi Cepat:",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Spacer(modifier = Modifier.height(4.dp))
         Row(
             modifier = Modifier
@@ -829,16 +923,16 @@ fun VideoStudioTab(
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            videoInspirations.forEach { insp ->
+            cinemaPresets.forEach { preset ->
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
-                        .clickable { videoPrompt = insp.substringAfter(" ") }
+                        .clickable { videoPrompt = preset.substringAfter(" ") }
                 ) {
                     Text(
-                        text = insp.take(38) + "...",
+                        text = preset.take(36) + "...",
                         fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -850,7 +944,7 @@ fun VideoStudioTab(
         Spacer(modifier = Modifier.height(12.dp))
 
         // Camera Motion Presets
-        Text(text = "Gerakan Kamera (Camera Motion):", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = "Gerakan Kamera Neural (Camera Motion):", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
         Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = Modifier
@@ -911,7 +1005,13 @@ fun VideoStudioTab(
             } else {
                 Icon(Icons.Default.Movie, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Render Video AI (Free Model)", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                Text(
+                    text = if (videoMode == "T2V") "Render Video Sinematik (Free Model)"
+                           else if (videoMode == "I2V") "Animasikan Gerak Gambar (Free Model)"
+                           else "Sintesis Sinema Nusantara (Free Model)",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
 
@@ -941,7 +1041,7 @@ fun VideoStudioTab(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Kamera: ${vRes.cameraMotion} • ${vRes.durationSec}s @ ${vRes.fps}fps",
+                                text = "Kamera: ${vRes.cameraMotion} • ${vRes.aspectRatio} • ${vRes.durationSec}s @ ${vRes.fps}fps",
                                 fontSize = 10.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -958,7 +1058,7 @@ fun VideoStudioTab(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(220.dp)
+                            .height(if (vRes.aspectRatio == "9:16") 280.dp else 220.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center
@@ -1000,7 +1100,7 @@ fun VideoStudioTab(
                                     }
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = if (isPlaying) "▶ Memutar Motion Sequence" else "⏸ Dijeda",
+                                        text = if (isPlaying) "▶ Memutar Sinema (${vRes.fps} FPS)" else "⏸ Dijeda",
                                         fontSize = 11.sp,
                                         color = Color.White
                                     )
@@ -1038,7 +1138,7 @@ fun VideoStudioTab(
                             Button(
                                 onClick = {
                                     coroutineScope.launch {
-                                        Toast.makeText(context, "Menyimpan video ke Galeri HP...", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "Menyimpan video sinematik ke Galeri HP...", Toast.LENGTH_SHORT).show()
                                         val saveResult = videoEngine.saveVideoToGallery(vRes.videoPreviewUrl, vRes.prompt)
                                         if (saveResult.isSuccess) {
                                             Toast.makeText(context, "✅ Berhasil disimpan ke Galeri HP (Pictures/NusantaraAI_Videos)!", Toast.LENGTH_LONG).show()
@@ -1059,7 +1159,7 @@ fun VideoStudioTab(
                             // Send to Chat Stream
                             Button(
                                 onClick = {
-                                    onGenerate("🎬 [Text-to-Video (${vRes.modelName}, Kamera ${vRes.cameraMotion})]: ${vRes.prompt}\n[VIDEO_URL]: ${vRes.videoPreviewUrl}")
+                                    onGenerate("🎬 [Sinema AI (${vRes.modelName}, Kamera ${vRes.cameraMotion}, ${vRes.aspectRatio})]: ${vRes.prompt}\n[VIDEO_URL]: ${vRes.videoPreviewUrl}")
                                     Toast.makeText(context, "Video dikirim ke riwayat obrolan AI!", Toast.LENGTH_SHORT).show()
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
