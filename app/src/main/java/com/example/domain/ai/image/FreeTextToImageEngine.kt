@@ -1,10 +1,24 @@
 package com.example.domain.ai.image
 
+import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 /**
@@ -37,17 +51,22 @@ data class GeneratedImageResult(
 )
 
 /**
- * Mesin Generasi Gambar Text-to-Image Gratis (Free Models) Nusantara AI.
+ * Mesin Generasi Gambar Text-to-Image Nyata Gratis (Free Models) Nusantara AI.
  *
- * Menggunakan model-model AI open-source bebas lisensi:
+ * Menggunakan model-model AI open-source bebas lisensi yang aktif:
  * 1. FLUX.1 Schnell (Black Forest Labs - Free Open Model)
  * 2. Stable Diffusion XL Turbo (Stability AI - Free Open Source)
- * 3. Flux Realism / Midjourney Aesthetic
+ * 3. Flux Realism / Midjourney Photorealism
  * 4. Anime Manga XL Diffusion
  * 5. Nusantara Cultural Digital Art (Batik & Heritage AI)
  * 6. 100% Offline Procedural Vector SVG Engine (Tanpa Kuota / Offline Fallback)
  */
 class FreeTextToImageEngine(private val context: Context) {
+
+    private val httpClient = OkHttpClient.Builder()
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .build()
 
     companion object {
         val FREE_MODELS = listOf(
@@ -98,7 +117,7 @@ class FreeTextToImageEngine(private val context: Context) {
     }
 
     /**
-     * Memperkaya prompt pengguna Bahasa Indonesia menjadi prompt visual berkualitas tinggi.
+     * Memperkaya prompt pengguna Bahasa Indonesia menjadi prompt visual fotografi/sinematik berkualitas tinggi.
      */
     fun enrichPrompt(userPrompt: String, style: String, modelId: String): String {
         val cleanPrompt = userPrompt.trim()
@@ -106,7 +125,7 @@ class FreeTextToImageEngine(private val context: Context) {
             "Cyberpunk Hologram" -> "cyberpunk aesthetic, neon glowing cyan and purple lights, futuristic hologram, dark obsidian reflections, 8k resolution, trending on artstation"
             "3D Pixar Render" -> "3D stylized animation style, cute character design, soft global illumination, octane render, vivid colors, Disney Pixar quality"
             "Minimalist Vector" -> "flat vector illustration, clean lines, bold geometric shapes, modern palette, high contrast, minimalist graphic design"
-            "Cinematic Realistic" -> "hyperrealistic 35mm photograph, cinematic lighting, shallow depth of field, award-winning photography, ultra-detailed texture, 8k"
+            "Cinematic Realistic" -> "hyperrealistic 35mm photograph, cinematic lighting, shallow depth of field, award-winning photography, ultra-detailed texture, 8k resolution"
             "Anime Shonen" -> "masterpiece anime artwork, vibrant colors, dynamic action pose, detailed background, Makoto Shinkai style, crisp lineart"
             "Batik Digital Art" -> "intricate Indonesian traditional batik mega mendung and parang patterns, gold foil accents, Indonesian cultural heritage, high detail modern digital art"
             else -> "high quality, ultra detailed, cinematic composition, masterpiece, 8k"
@@ -120,7 +139,7 @@ class FreeTextToImageEngine(private val context: Context) {
     }
 
     /**
-     * Menghitung resolusi berdasarkan rasio aspek.
+     * Menghitung resolusi piksel berdasarkan rasio aspek.
      */
     fun getDimensions(aspectRatio: String): Pair<Int, Int> {
         return when (aspectRatio) {
@@ -133,7 +152,7 @@ class FreeTextToImageEngine(private val context: Context) {
     }
 
     /**
-     * Mengeksekusi generasi gambar Text-to-Image menggunakan Free Model.
+     * Mengeksekusi generasi gambar Text-to-Image menggunakan Free Model aktif.
      */
     suspend fun generateImage(
         prompt: String,
@@ -190,6 +209,50 @@ class FreeTextToImageEngine(private val context: Context) {
             svgContent = null,
             seed = seed
         )
+    }
+
+    /**
+     * Mengunduh byte gambar nyata dari server AI dan menyimpannya langsung ke Galeri Foto HP pengguna.
+     */
+    suspend fun saveImageToGallery(imageUrl: String, title: String): Result<Uri> = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder().url(imageUrl).build()
+            val response = httpClient.newCall(request).execute()
+            if (!response.isSuccessful || response.body == null) {
+                return@withContext Result.failure(Exception("Gagal mengunduh gambar: HTTP ${response.code}"))
+            }
+
+            val imageBytes = response.body!!.bytes()
+            val filename = "NusantaraAI_${System.currentTimeMillis()}.jpg"
+
+            val resolver = context.contentResolver
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/NusantaraAI")
+                    put(MediaStore.MediaColumns.IS_PENDING, 1)
+                }
+            }
+
+            val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                ?: return@withContext Result.failure(Exception("Gagal mengalokasikan URI penyimpanan galeri."))
+
+            resolver.openOutputStream(imageUri)?.use { out ->
+                out.write(imageBytes)
+                out.flush()
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                contentValues.clear()
+                contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+                resolver.update(imageUri, contentValues, null, null)
+            }
+
+            Result.success(imageUri)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     /**

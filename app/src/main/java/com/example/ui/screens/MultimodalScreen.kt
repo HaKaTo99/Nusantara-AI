@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -49,13 +52,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.launch
@@ -534,39 +535,66 @@ fun VisualStudioTab(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        Row(
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // Save to Gallery Button
+                                Button(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            Toast.makeText(context, "Mengunduh gambar ke Galeri HP...", Toast.LENGTH_SHORT).show()
+                                            val saveResult = imageEngine.saveImageToGallery(res.imageUrl, res.prompt)
+                                            if (saveResult.isSuccess) {
+                                                Toast.makeText(context, "✅ Berhasil disimpan ke Galeri (Pictures/NusantaraAI)!", Toast.LENGTH_LONG).show()
+                                            } else {
+                                                Toast.makeText(context, "Gagal menyimpan: ${saveResult.exceptionOrNull()?.localizedMessage}", Toast.LENGTH_LONG).show()
+                                            }
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.Default.Download, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(15.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Simpan Galeri", fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                                }
+
+                                // Send to Chat Stream
+                                Button(
+                                    onClick = {
+                                        onGenerate("🎨 [Text to Image ($selectedStyle)]: ${res.prompt}\n[IMAGE_URL]: ${res.imageUrl}")
+                                        Toast.makeText(context, "Gambar dikirim ke riwayat percakapan AI!", Toast.LENGTH_SHORT).show()
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.size(15.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Kirim ke Chat", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold)
+                                }
+                            }
+
                             // Copy Link Button
                             Button(
                                 onClick = {
                                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                     clipboard.setPrimaryClip(ClipData.newPlainText("Image URL", res.imageUrl))
-                                    Toast.makeText(context, "Tautan gambar disalin ke clipboard!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Tautan gambar resolusi penuh disalin!", Toast.LENGTH_SHORT).show()
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                                 shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 Icon(Icons.Default.ContentCopy, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Salin URL", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface)
-                            }
-
-                            // Send to Chat Stream
-                            Button(
-                                onClick = {
-                                    onGenerate("🎨 [Text to Image ($selectedStyle)]: ${res.prompt}")
-                                    Toast.makeText(context, "Gambar dikirim ke riwayat percakapan AI!", Toast.LENGTH_SHORT).show()
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(Icons.Default.Send, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Kirim ke Chat", fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Salin URL Gambar Resolusi Penuh", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface)
                             }
                         }
                     }
