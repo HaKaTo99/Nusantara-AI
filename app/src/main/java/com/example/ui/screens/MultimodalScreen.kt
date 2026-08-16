@@ -174,8 +174,8 @@ fun MultimodalScreen(
 
         when (selectedTab) {
             0 -> VisualStudioTab(onGenerate = onAnalyzeImagePrompt)
-            1 -> VideoStudioTab()
-            2 -> AudioAndMusicStudioTab()
+            1 -> VideoStudioTab(onGenerate = onAnalyzeImagePrompt)
+            2 -> AudioAndMusicStudioTab(onGenerate = onAnalyzeImagePrompt)
             3 -> DocumentProcessorTab(documents = documents, onProcess = onProcessDocument)
         }
     }
@@ -1098,7 +1098,9 @@ fun VideoStudioTab(
 // 3. AUDIO & MUSIC STUDIO: Text-to-Music & Text-to-Audio
 // ----------------------------------------------------
 @Composable
-fun AudioAndMusicStudioTab() {
+fun AudioAndMusicStudioTab(
+    onGenerate: (String) -> Unit = {}
+) {
     val context = LocalContext.current
     var audioPrompt by remember { mutableStateOf("") }
     var activeCategory by remember { mutableStateOf("MUSIC") } // "MUSIC" = Text to Music, "SFX" = Text to Audio
@@ -1106,6 +1108,8 @@ fun AudioAndMusicStudioTab() {
     var selectedBpm by remember { mutableIntStateOf(120) }
     var isPlayingTrack by remember { mutableStateOf(false) }
     var activeTrackTitle by remember { mutableStateOf<String?>(null) }
+
+    val primaryColor = MaterialTheme.colorScheme.primary
 
     val genres = listOf("Synthwave Cyberpunk", "Lo-Fi Chill Hop", "Epic Orchestral", "Indonesian Gamelan Fusion", "Ambient Meditation")
     val sfxPresets = listOf("Cyberpunk Ambient Rain", "Sci-Fi Plasma Laser", "Binaural Focus Alpha Waves (10Hz)", "Futuristic Mechanical Engine")
@@ -1116,17 +1120,25 @@ fun AudioAndMusicStudioTab() {
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        Text(
-            text = "🎵 Studio Audio & Musik (Text-to-Music & Text-to-Audio)",
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = "Sintesis komposisi musik melodi, akord, dan efek suara audio spasial AI",
-            fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "🎵 Studio Audio & Musik (Free AI Models)",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "MusicGen Open • AudioCraft • Spatial SFX Synthesizer",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -1143,7 +1155,7 @@ fun AudioAndMusicStudioTab() {
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) EmeraldGreen else Color.Transparent)
+                        .background(if (isSelected) primaryColor else Color.Transparent)
                         .clickable { activeCategory = cat }
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
@@ -1152,7 +1164,7 @@ fun AudioAndMusicStudioTab() {
                         text = label,
                         fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurface
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -1173,7 +1185,7 @@ fun AudioAndMusicStudioTab() {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            Text(text = "Genre & Aransemen:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text(text = "Genre & Aransemen:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier
@@ -1185,7 +1197,7 @@ fun AudioAndMusicStudioTab() {
                     val isSelected = selectedGenre == genre
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = if (isSelected) EmeraldGreen else MaterialTheme.colorScheme.surfaceVariant,
+                        color = if (isSelected) primaryColor else MaterialTheme.colorScheme.surfaceVariant,
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
                             .clickable { selectedGenre = genre }
@@ -1194,7 +1206,7 @@ fun AudioAndMusicStudioTab() {
                             text = genre,
                             fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurface,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                         )
                     }
@@ -1207,8 +1219,8 @@ fun AudioAndMusicStudioTab() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Tempo: $selectedBpm BPM", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
-                Text("Kunci Nada: C Mayor / 44.1kHz", fontSize = 12.sp, color = ElectricCyan, fontWeight = FontWeight.Bold)
+                Text("Tempo: $selectedBpm BPM", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                Text("Kunci Nada: C Mayor / 44.1kHz", fontSize = 12.sp, color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold)
             }
             Slider(
                 value = selectedBpm.toFloat(),
@@ -1228,12 +1240,13 @@ fun AudioAndMusicStudioTab() {
                     }
                 },
                 enabled = audioPrompt.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = EmeraldGreen),
+                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Default.Audiotrack, contentDescription = null, tint = Color.Black)
+                Icon(Icons.Default.Audiotrack, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Gubah Musik AI (Text to Music)", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text("Gubah Musik AI (Text to Music)", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
             }
         } else {
             // Text to Audio (SFX / Ambient)
@@ -1249,7 +1262,7 @@ fun AudioAndMusicStudioTab() {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            Text(text = "Preset Cepat Audio:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text(text = "Preset Cepat Audio:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(6.dp))
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 sfxPresets.forEach { preset ->
@@ -1264,6 +1277,7 @@ fun AudioAndMusicStudioTab() {
                         Text(
                             text = "🔊 $preset",
                             fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                         )
                     }
@@ -1281,12 +1295,13 @@ fun AudioAndMusicStudioTab() {
                     }
                 },
                 enabled = audioPrompt.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = ElectricCyan),
+                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Default.GraphicEq, contentDescription = null, tint = Color.Black)
+                Icon(Icons.Default.GraphicEq, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Sintesis Efek Audio (Text to Audio)", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text("Sintesis Efek Audio (Text to Audio)", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -1295,10 +1310,10 @@ fun AudioAndMusicStudioTab() {
         // Audio Equalizer & Track Player Card
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, EmeraldGreen.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(
@@ -1306,8 +1321,13 @@ fun AudioAndMusicStudioTab() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("🎼 Pemutar Audio & Gelombang Spektrum", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    Text(if (isPlayingTrack) "PLAYING" else "PAUSED", fontSize = 10.sp, color = EmeraldGreen, fontWeight = FontWeight.Bold)
+                    Text("🎼 Pemutar Audio & Gelombang Spektrum", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                    Text(
+                        text = if (isPlayingTrack) "● PLAYING" else "○ PAUSED",
+                        fontSize = 10.sp,
+                        color = if (isPlayingTrack) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -1317,7 +1337,7 @@ fun AudioAndMusicStudioTab() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)
-                        .background(Color(0xFF0F172A), RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
                         .padding(horizontal = 12.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
@@ -1339,7 +1359,7 @@ fun AudioAndMusicStudioTab() {
                                 .width(6.dp)
                                 .height(barHeight.dp)
                                 .clip(RoundedCornerShape(3.dp))
-                                .background(if (idx % 2 == 0) EmeraldGreen else ElectricCyan)
+                                .background(if (idx % 2 == 0) primaryColor else MaterialTheme.colorScheme.secondary)
                         )
                     }
                 }
@@ -1364,15 +1384,52 @@ fun AudioAndMusicStudioTab() {
                     IconButton(
                         onClick = { isPlayingTrack = !isPlayingTrack },
                         modifier = Modifier
-                            .size(34.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
-                            .background(EmeraldGreen)
+                            .background(primaryColor)
                     ) {
                         Icon(
                             imageVector = if (isPlayingTrack) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = "Play/Pause",
-                            tint = Color.Black
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
+                    }
+                }
+
+                if (activeTrackTitle != null) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                onGenerate("🎵 [Audio & Musik AI]: $activeTrackTitle")
+                                Toast.makeText(context, "Komposisi audio dikirim ke riwayat obrolan AI!", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Kirim ke Chat", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Bold)
+                        }
+
+                        Button(
+                            onClick = {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                clipboard.setPrimaryClip(ClipData.newPlainText("Audio Track", activeTrackTitle))
+                                Toast.makeText(context, "Detail trek audio disalin ke clipboard!", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Salin Info", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface)
+                        }
                     }
                 }
             }
@@ -1486,24 +1543,25 @@ fun DocumentProcessorTab(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        val primaryColor = MaterialTheme.colorScheme.primary
+
         Button(
             onClick = {
                 if (rawText.isNotBlank()) {
                     isProcessing = true
-                    val summary = "Ringkasan Dokumen [${docTitle.ifBlank { "Dokumen Baru" }}]:\nDokumen memuat data operasional terstruktur dengan kenaikan performa signifikan. Rasio efisiensi tercapai 3.2x dengan kestabilan margin."
-                    val insights = "• Tren pertumbuhan positif stabil\n• Biaya operasional terkendali di bawah 30%\n• Rekomendasi: Lanjutkan ekspansi model ke Q2"
                     onProcess(docTitle.ifBlank { "Dokumen Analisis" }, docType, rawText)
                     isProcessing = false
                     Toast.makeText(context, "Dokumen berhasil diproses & dienkripsi!", Toast.LENGTH_SHORT).show()
                 }
             },
             enabled = rawText.isNotBlank() && !isProcessing,
-            colors = ButtonDefaults.buttonColors(containerColor = EmeraldGreen),
+            colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(Icons.Default.UploadFile, contentDescription = null, tint = Color.Black)
+            Icon(Icons.Default.UploadFile, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
             Spacer(modifier = Modifier.width(6.dp))
-            Text("Analisis & Ringkas Dokumen", color = Color.Black, fontWeight = FontWeight.Bold)
+            Text("Analisis & Ringkas Dokumen dengan AI", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(18.dp))
@@ -1511,7 +1569,8 @@ fun DocumentProcessorTab(
         Text(
             text = "📚 Dokumen Teranalisis (${documents.size}):",
             fontSize = 13.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -1525,23 +1584,24 @@ fun DocumentProcessorTab(
             documents.forEach { doc ->
                 Card(
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(text = doc.title, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            Text(text = doc.fileType, color = ElectricCyan, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            Text(text = doc.title, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                            Text(text = doc.fileType, color = primaryColor, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(text = doc.summary, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = doc.keyInsights, fontSize = 10.sp, color = EmeraldGreen, fontFamily = FontFamily.Monospace)
+                        Text(text = doc.keyInsights, fontSize = 10.sp, color = MaterialTheme.colorScheme.tertiary, fontFamily = FontFamily.Monospace)
                     }
                 }
             }
