@@ -47,11 +47,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.data.local.entity.ChatMessageEntity
 import com.example.data.local.entity.PersonaEntity
 import com.example.domain.ai.OfflineReasoningEngine
@@ -440,6 +443,37 @@ fun ChatMessageItem(
                         color = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer
                                 else MaterialTheme.colorScheme.onSurface
                     )
+
+                    // Generated Image Preview if present
+                    val extractedImageUrl = remember(message.content) {
+                        if (message.content.contains("https://image.pollinations.ai/")) {
+                            "https://" + message.content.substringAfter("https://").substringBefore(" ").substringBefore("\n")
+                        } else if (message.content.contains("[IMAGE_URL]:")) {
+                            message.content.substringAfter("[IMAGE_URL]:").trim().substringBefore("\n")
+                        } else null
+                    }
+
+                    if (!extractedImageUrl.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(extractedImageUrl)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = "Generated AI Image",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
 
                     // Code Artifact if present
                     if (!codeContent.isNullOrBlank()) {

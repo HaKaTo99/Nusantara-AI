@@ -17,6 +17,8 @@ import com.example.domain.ai.HybridAIEngine
 import com.example.domain.ai.OfflineReasoningEngine
 import com.example.domain.ai.hub.HubModelItem
 import com.example.domain.ai.hub.ModelHubManager
+import com.example.domain.ai.image.FreeTextToImageEngine
+import com.example.domain.ai.image.GeneratedImageResult
 import com.example.domain.ai.native.NativeLlamaBridge
 import com.example.domain.ai.native.NativeWhisperBridge
 import com.example.domain.ai.telemetry.NPUTelemetryManager
@@ -89,6 +91,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Phase 3 StateFlows
     val hubModels: StateFlow<List<HubModelItem>> = modelHubManager.hubModels
     val telemetrySnapshot: StateFlow<NPUTelemetrySnapshot> = npuTelemetryManager.telemetry
+
+    // Free Text to Image Engine
+    val freeTextToImageEngine = FreeTextToImageEngine(application)
+    private val _generatedImageState = MutableStateFlow<GeneratedImageResult?>(null)
+    val generatedImageState: StateFlow<GeneratedImageResult?> = _generatedImageState.asStateFlow()
+    private val _isGeneratingImage = MutableStateFlow(false)
+    val isGeneratingImage: StateFlow<Boolean> = _isGeneratingImage.asStateFlow()
 
     // Sync & Connectivity
     val isOnline: StateFlow<Boolean> = syncManager.isOnline
@@ -356,6 +365,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun analyzeImagePrompt(prompt: String) {
         sendMessage("🎨 [Visual Studio Analysis] $prompt")
+    }
+
+    fun generateTextToImage(
+        prompt: String,
+        style: String = "Cinematic Realistic",
+        aspectRatio: String = "1:1",
+        modelId: String = "flux"
+    ) {
+        viewModelScope.launch {
+            _isGeneratingImage.value = true
+            val result = freeTextToImageEngine.generateImage(
+                prompt = prompt,
+                style = style,
+                aspectRatio = aspectRatio,
+                modelId = modelId,
+                isOnline = isOnline.value
+            )
+            _generatedImageState.value = result
+            _isGeneratingImage.value = false
+
+            // Rekam ke stream chat agar tersimpan di riwayat
+            val imageSummary = "🎨 [Text-to-Image Generated]\n• Model: ${result.modelName}\n• Gaya: $style ($aspectRatio)\n• Prompt: \"${result.prompt}\"\n\n🔗 Gambar berhasil digenerasi dengan model AI gratis (${result.modelName})."
+            sendMessage(imageSummary)
+        }
     }
 
     fun triggerSync() {

@@ -49,6 +49,20 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.OpenInBrowser
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.layout.ContentScale
+import kotlinx.coroutines.launch
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.domain.ai.image.FreeTextToImageEngine
+import com.example.domain.ai.image.GeneratedImageResult
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -165,20 +179,64 @@ fun MultimodalScreen(
 }
 
 // ----------------------------------------------------
-// 1. VISUAL STUDIO: Text-to-Image & Image-to-Text (OCR/Vision)
+// 1. VISUAL STUDIO: Free Models Text-to-Image & OCR Vision
 // ----------------------------------------------------
 @Composable
 fun VisualStudioTab(
     onGenerate: (String) -> Unit
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val imageEngine = remember { FreeTextToImageEngine(context) }
+
     var visualPrompt by remember { mutableStateOf("") }
     var selectedRatio by remember { mutableStateOf("1:1") }
-    var selectedStyle by remember { mutableStateOf("Cyberpunk Hologram") }
-    var isSimulating by remember { mutableStateOf(false) }
-    var lastGeneratedConcept by remember { mutableStateOf<String?>(null) }
+    var selectedStyle by remember { mutableStateOf("Cinematic Realistic") }
+    var selectedModelId by remember { mutableStateOf("flux") }
+
+    var isGenerating by remember { mutableStateOf(false) }
+    var currentResult by remember { mutableStateOf<GeneratedImageResult?>(null) }
     var activeMode by remember { mutableStateOf("T2I") } // "T2I" = Text-to-Image, "I2T" = Image-to-Text
 
-    val styles = listOf("Cyberpunk Hologram", "3D Pixar Render", "Minimalist Vector", "Cinematic Realistic", "Anime Shonen", "Batik Digital Art")
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+    val primaryColor = MaterialTheme.colorScheme.primary
+
+    val styles = listOf(
+        "Cinematic Realistic",
+        "Cyberpunk Hologram",
+        "3D Pixar Render",
+        "Minimalist Vector",
+        "Anime Shonen",
+        "Batik Digital Art"
+    )
+
+    val inspirationPrompts = listOf(
+        "🦅 Candi Borobudur futuristik dengan lampu neon cyberpunk dan kabut mistis pagi hari",
+        "☕ Secangkir kopi luwak hangat dengan latar pegunungan Jawa Barat yang asri",
+        "🌆 Megapolitan Jakarta tahun 2050 dengan gedung pencakar langit hijau dan monorel terbang",
+        "🏝️ Gugusan pulau karang Raja Ampat air toska kristal di senja hari dramatis"
+    )
+
+    fun executeGeneration() {
+        if (visualPrompt.isBlank() || isGenerating) return
+        isGenerating = true
+        coroutineScope.launch {
+            try {
+                val result = imageEngine.generateImage(
+                    prompt = visualPrompt,
+                    style = selectedStyle,
+                    aspectRatio = selectedRatio,
+                    modelId = selectedModelId,
+                    isOnline = true
+                )
+                currentResult = result
+            } catch (e: Exception) {
+                Toast.makeText(context, "Gagal menghasilkan gambar: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            } finally {
+                isGenerating = false
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -193,13 +251,13 @@ fun VisualStudioTab(
         ) {
             Column {
                 Text(
-                    text = "🎨 Studio Gambar (Text-to-Image & Image-to-Text)",
-                    fontSize = 15.sp,
+                    text = "🎨 Studio Gambar (Free AI Models)",
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Gemini 2.5 Flash Vision & Neural Diffusion Engine",
+                    text = "FLUX.1 Schnell • SDXL Turbo • Flux Realism (100% Free)",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -221,7 +279,7 @@ fun VisualStudioTab(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) ElectricCyan else Color.Transparent)
+                        .background(if (isSelected) primaryColor else Color.Transparent)
                         .clickable { activeMode = mode }
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
@@ -230,7 +288,7 @@ fun VisualStudioTab(
                         text = label,
                         fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurface
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -239,7 +297,53 @@ fun VisualStudioTab(
         Spacer(modifier = Modifier.height(14.dp))
 
         if (activeMode == "T2I") {
-            // Text to Image Prompt
+            // Free AI Model Selector
+            Text(text = "Pilih Model AI Gratis (Free Models):", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                FreeTextToImageEngine.FREE_MODELS.forEach { model ->
+                    val isSelected = selectedModelId == model.id
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isSelected) primaryColor.copy(alpha = if (isDark) 0.25f else 0.15f)
+                                else MaterialTheme.colorScheme.surface,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(
+                                width = if (isSelected) 2.dp else 1.dp,
+                                color = if (isSelected) primaryColor else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .clickable { selectedModelId = model.id }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(model.iconEmoji, fontSize = 13.sp)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Column {
+                                Text(
+                                    text = model.name,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Text to Image Prompt Field
             OutlinedTextField(
                 value = visualPrompt,
                 onValueChange = { visualPrompt = it },
@@ -252,9 +356,39 @@ fun VisualStudioTab(
                 minLines = 3
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            Text(text = "Pilih Rasio Aspek:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            // Prompt Inspiration Chips
+            Text(text = "💡 Inspirasi Cepat:", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                inspirationPrompts.forEach { insp ->
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { visualPrompt = insp.substringAfter(" ") }
+                    ) {
+                        Text(
+                            text = insp.take(35) + "...",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Aspect Ratio Selector
+            Text(text = "Pilih Rasio Aspek:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -264,7 +398,7 @@ fun VisualStudioTab(
                     val isSelected = selectedRatio == ratio
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = if (isSelected) ElectricCyan else MaterialTheme.colorScheme.surfaceVariant,
+                        color = if (isSelected) primaryColor else MaterialTheme.colorScheme.surfaceVariant,
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .clickable { selectedRatio = ratio }
@@ -273,7 +407,7 @@ fun VisualStudioTab(
                             text = ratio,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurface,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                     }
@@ -282,19 +416,20 @@ fun VisualStudioTab(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            Text(text = "Gaya Visual (Style):", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            // Style Selector
+            Text(text = "Gaya Visual (Style):", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 styles.forEach { style ->
                     val isSelected = selectedStyle == style
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = if (isSelected) NeonViolet else MaterialTheme.colorScheme.surfaceVariant,
+                        color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceVariant,
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
                             .clickable { selectedStyle = style }
@@ -303,7 +438,7 @@ fun VisualStudioTab(
                             text = style,
                             fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                            color = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                         )
                     }
@@ -312,24 +447,130 @@ fun VisualStudioTab(
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            // Generate Button
             Button(
-                onClick = {
-                    if (visualPrompt.isNotBlank()) {
-                        isSimulating = true
-                        lastGeneratedConcept = visualPrompt
-                        onGenerate("🎨 [Text to Image ($selectedStyle, Rasio $selectedRatio)]: $visualPrompt")
-                        isSimulating = false
-                    }
-                },
-                enabled = visualPrompt.isNotBlank() && !isSimulating,
-                colors = ButtonDefaults.buttonColors(containerColor = ElectricCyan),
+                onClick = { executeGeneration() },
+                enabled = visualPrompt.isNotBlank() && !isGenerating,
+                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("generate_image_button")
             ) {
-                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.Black)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Generasi Gambar AI (Text to Image)", color = Color.Black, fontWeight = FontWeight.Bold)
+                if (isGenerating) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Sedang Menghasilkan Gambar...", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                } else {
+                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Generasi Gambar AI (Free Model)", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            // Generated Image Preview Card
+            if (currentResult != null) {
+                val res = currentResult!!
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "🖼️ Hasil Generasi: ${res.modelName}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Rasio ${res.aspectRatio} (${res.width}x${res.height}) • Seed: ${res.seed}",
+                                    fontSize = 10.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Real Image Display with Coil AsyncImage
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(260.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(res.imageUrl)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = res.prompt,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = "\"${res.prompt}\"",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Copy Link Button
+                            Button(
+                                onClick = {
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    clipboard.setPrimaryClip(ClipData.newPlainText("Image URL", res.imageUrl))
+                                    Toast.makeText(context, "Tautan gambar disalin ke clipboard!", Toast.LENGTH_SHORT).show()
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Salin URL", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface)
+                            }
+
+                            // Send to Chat Stream
+                            Button(
+                                onClick = {
+                                    onGenerate("🎨 [Text to Image ($selectedStyle)]: ${res.prompt}")
+                                    Toast.makeText(context, "Gambar dikirim ke riwayat percakapan AI!", Toast.LENGTH_SHORT).show()
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Send, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Kirim ke Chat", fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
             }
         } else {
             // Image to Text (OCR / Vision)
@@ -358,7 +599,7 @@ fun VisualStudioTab(
                             visualPrompt = "OCR & Terjemahan: Deteksi teks dalam gambar dan terjemahkan ke Bahasa Indonesia."
                         }
                 ) {
-                    Text("💡 Preset: OCR & Terjemah", fontSize = 11.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
+                    Text("🔍 OCR Dokumen", fontSize = 11.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
                 }
 
                 Surface(
@@ -367,10 +608,10 @@ fun VisualStudioTab(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
                         .clickable {
-                            visualPrompt = "Deskripsi Visual: Jelaskan komposisi visual, warna dominan, dan nuansa gambar secara detail."
+                            visualPrompt = "Deskripsi Visual: Jelaskan komposisi visual, warna, dan emosi yang terkandung dalam gambar ini."
                         }
                 ) {
-                    Text("👁️ Preset: Scene Describer", fontSize = 11.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
+                    Text("👁️ Analisis Visual", fontSize = 11.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
                 }
             }
 
@@ -379,72 +620,17 @@ fun VisualStudioTab(
             Button(
                 onClick = {
                     if (visualPrompt.isNotBlank()) {
-                        lastGeneratedConcept = "Hasil Analisis Vision: $visualPrompt"
-                        onGenerate("🔍 [Image to Text / Vision OCR]: $visualPrompt")
+                        onGenerate("🔍 [Image-to-Text / OCR Analysis]: $visualPrompt")
                     }
                 },
                 enabled = visualPrompt.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = EmeraldGreen),
+                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.Black)
+                Icon(Icons.Default.CameraAlt, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Analisis Gambar (Image to Text)", color = Color.Black, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Visual Preview Card
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, ElectricCyan.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
-        ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Text(
-                    text = "🖼️ Canvas Preview & Output",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color(0xFF0F172A), Color(0xFF1E1B4B))
-                            )
-                        )
-                        .border(1.dp, Color(0xFF334155), RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(if (activeMode == "T2I") "🎨" else "🔍", fontSize = 32.sp)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = lastGeneratedConcept ?: "Siap untuk memproses generasi visual / ekstraksi teks.",
-                            fontSize = 12.sp,
-                            color = ElectricCyan,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Akurasi E2EE • Latensi Rendah • On-Device Neural Cache",
-                            fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                Text("Jalankan Analisis Vision / OCR", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
             }
         }
     }
