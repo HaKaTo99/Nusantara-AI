@@ -50,40 +50,51 @@ class HybridAIEngineTest {
     }
 
     @Test
-    fun testMathReasoningPrompt() = runBlocking {
+    fun testBerapa10Kali10Multiplication() = runBlocking {
         val response = hybridEngine.processQuery(
-            prompt = "Hitung 25 * 4 + 100",
+            prompt = "berapa 10 kali 10",
+            selectedModel = "Deepseek R1 Distill Qwen 1.5b Q4 K M",
+            modePreference = "OFFLINE"
+        )
+
+        assertNotNull(response)
+        assertTrue("Hasil perkalian 10 kali 10 harus memuat 100", response.text.contains("100"))
+        assertTrue("Harus memuat operasi perkalian", response.text.contains("Perkalian") || response.text.contains("10 × 10 = 100"))
+    }
+
+    @Test
+    fun testPercentageCalculation() = runBlocking {
+        val response = hybridEngine.processQuery(
+            prompt = "berapa 25 persen dari 200000",
             selectedModel = "Gemini 3.5 Flash",
             modePreference = "OFFLINE"
         )
 
         assertNotNull(response)
-        assertTrue("Harus memuat penalaran matematis", 
-            response.text.contains("Matematis", ignoreCase = true) || response.text.contains("Kalkulasi", ignoreCase = true))
+        assertTrue("Hasil 25% dari 200000 harus memuat 50000", response.text.contains("50000"))
+    }
+
+    @Test
+    fun testIbuKotaIndonesia() = runBlocking {
+        val response = hybridEngine.processQuery(
+            prompt = "apa ibu kota indonesia",
+            selectedModel = "Gemini 3.5 Flash",
+            modePreference = "OFFLINE"
+        )
+
+        assertNotNull(response)
+        assertTrue("Harus memuat IKN Nusantara", response.text.contains("IKN") || response.text.contains("Nusantara"))
     }
 
     @Test
     fun testCodeGenerationPrompt() = runBlocking {
         val response = hybridEngine.processQuery(
-            prompt = "Tulis fungsi kode Kotlin untuk memfilter data",
+            prompt = "buatkan kalkulator python",
             selectedModel = "Gemini 3.5 Flash",
             modePreference = "OFFLINE"
         )
 
         assertNotNull(response)
-        assertTrue("Harus memuat blok kode", response.text.contains("```") || response.codeArtifact != null)
-    }
-
-    @Test
-    fun testGeneralQuestionPrompt() = runBlocking {
-        val response = hybridEngine.processQuery(
-            prompt = "Bagaimana cara kerja teknologi AI hybrid pada smartphone?",
-            selectedModel = "Gemini 3.5 Flash",
-            modePreference = "OFFLINE"
-        )
-
-        assertNotNull(response)
-        assertTrue("Jawaban harus informatif dan terstruktur", response.text.length > 50)
-        assertTrue("Reasoning steps harus dihasilkan", response.reasoningSteps.isNotEmpty())
+        assertTrue("Harus memuat blok kode python", response.text.contains("```python") || response.codeArtifact != null)
     }
 }
