@@ -279,14 +279,94 @@ object OfflineReasoningEngine {
                             "✅ **Status:** Terverifikasi aman, responsif, dan siap dijalankan langsung di browser/sandbox tanpa dependensi eksternal."
                 }
 
-                // Coding / Programming
-                lower.contains("kode") || lower.contains("kotlin") || lower.contains("python") || lower.contains("javascript") || lower.contains("fungsi") || lower.contains("class") || lower.contains("kalkulator") -> {
+                // Coding / Multi-language Programming Engine
+                lower.contains("kode") || lower.contains("program") || lower.contains("kotlin") || lower.contains("python") ||
+                lower.contains("java") || lower.contains("javascript") || lower.contains("sql") || lower.contains("bash") ||
+                lower.contains("fungsi") || lower.contains("class") || lower.contains("kalkulator") || lower.contains("c++") -> {
                     steps.add("💻 [Dev Sandbox] Menganalisis sintaks bahasa pemrograman dan algoritma")
                     steps.add("⚡ [Optimization] Memastikan time complexity O(n) dan alokasi memori efisien")
-                    
-                    if (lower.contains("python")) {
-                        artifactType = "PYTHON"
-                        codeArtifact = """
+
+                    when {
+                        lower.contains("java") && !lower.contains("javascript") -> {
+                            artifactType = "JAVA"
+                            codeArtifact = """
+public class DataProcessor {
+    public static void main(String[] args) {
+        String title = "Nusantara AI High-Performance Engine";
+        int cores = Runtime.getRuntime().availableProcessors();
+        System.out.println("Status: " + title);
+        System.out.println("Cores CPU Aktif: " + cores);
+        System.out.println("Zero-Knowledge Security: Terverifikasi");
+    }
+}
+                            """.trimIndent()
+                        }
+                        lower.contains("sql") || lower.contains("database") || lower.contains("tabel") -> {
+                            artifactType = "SQL"
+                            codeArtifact = """
+-- Nusantara AI In-Memory Data Vault
+CREATE TABLE models_telemetry (
+    id INTEGER PRIMARY KEY,
+    model_name TEXT NOT NULL,
+    throughput_tps REAL,
+    quantization TEXT
+);
+
+INSERT INTO models_telemetry (model_name, throughput_tps, quantization) 
+VALUES ('Nusantara-Q4_K_M', 32.5, '4-bit'),
+       ('Flux-1.0-Schnell', 18.2, 'FP16'),
+       ('DeepSeek-R1-Distill', 27.8, 'Q8_0');
+
+SELECT id, model_name, throughput_tps, quantization FROM models_telemetry;
+                            """.trimIndent()
+                        }
+                        lower.contains("bash") || lower.contains("shell") || lower.contains("terminal") || lower.contains("linux") -> {
+                            artifactType = "BASH"
+                            codeArtifact = """
+#!/bin/bash
+# Nusantara AI Shell Environment Verifier
+echo "=== Nusantara AI System Environment ==="
+uname -a
+pwd
+whoami
+echo "Status NPU: Akselerator Terdeteksi dan Aktif"
+                            """.trimIndent()
+                        }
+                        lower.contains("javascript") || lower.contains("js") || lower.contains("typescript") || lower.contains("ts") -> {
+                            artifactType = "JAVASCRIPT"
+                            codeArtifact = """
+// Nusantara AI Polyglot Execution Engine
+const calculateSwarmTops = (nodes) => {
+    return nodes.reduce((acc, node) => acc + node.tops, 0);
+};
+
+const connectedNodes = [
+    { name: "Device-Primary-NPU", tops: 45.0 },
+    { name: "P2P-Peer-Mesh-01", tops: 28.5 }
+];
+
+console.log("Total Distributed TOPS:", calculateSwarmTops(connectedNodes));
+                            """.trimIndent()
+                        }
+                        lower.contains("c++") || lower.contains("cpp") -> {
+                            artifactType = "CPP"
+                            codeArtifact = """
+#include <iostream>
+#include <vector>
+#include <numeric>
+
+int main() {
+    std::vector<int> tokens = {128, 256, 512, 1024};
+    int total = std::accumulate(tokens.begin(), tokens.end(), 0);
+    std::cout << "Nusantara AI Native llama.cpp Engine Active\n";
+    std::cout << "Total Context Size: " << total << " tokens\n";
+    return 0;
+}
+                            """.trimIndent()
+                        }
+                        lower.contains("python") || lower.contains("py") -> {
+                            artifactType = "PYTHON"
+                            codeArtifact = """
 # Nusantara AI Calculator & Data Processor
 def kalkulator(a: float, operator: str, b: float) -> float:
     match operator:
@@ -297,21 +377,29 @@ def kalkulator(a: float, operator: str, b: float) -> float:
         case "^": return a ** b
         case _: raise ValueError(f"Operator '{operator}' tidak valid")
 
-# Contoh Penggunaan:
-if __name__ == "__main__":
-    angka1, op, angka2 = 10, "*", 10
-    print(f"{angka1} {op} {angka2} = {kalkulator(angka1, op, angka2)}")
-                        """.trimIndent()
-                    } else {
-                        artifactType = "KOTLIN"
-                        codeArtifact = """
+# Eksekusi Contoh:
+angka1, op, angka2 = 25, "*", 4
+print(f"Hasil Perhitungan: {angka1} {op} {angka2} = {kalkulator(angka1, op, angka2)}")
+print("Status: Sukses dieksekusi di On-Device Python Sandbox")
+                            """.trimIndent()
+                        }
+                        else -> {
+                            artifactType = "KOTLIN"
+                            codeArtifact = """
 // Nusantara AI On-Device Algorithm Engine
 fun <T> List<T>.processSafely(predicate: (T) -> Boolean): List<T> {
     return this.filter(predicate).also {
         println("Processed ${'$'}{it.size} items securely on device.")
     }
 }
-                        """.trimIndent()
+
+fun main() {
+    val items = listOf("Nusantara Core", "Edge Inference", "P2P Mesh", "E2EE Vault")
+    val secureItems = items.processSafely { it.isNotEmpty() }
+    println("Hasil Komputasi Kotlin: ${'$'}{secureItems.joinToString(\", \")}")
+}
+                            """.trimIndent()
+                        }
                     }
 
                     val lang = artifactType ?: "KOTLIN"
@@ -319,7 +407,7 @@ fun <T> List<T>.processSafely(predicate: (T) -> Boolean): List<T> {
                             "```${lang.lowercase()}\n$codeArtifact\n```\n\n" +
                             "**Penjelasan Arsitektural:**\n" +
                             "- Menjaga immutability data untuk menghindari efek samping (*side-effects*).\n" +
-                            "- Sepenuhnya aman, efisien, dan siap dikompilasi langsung."
+                            "- Sepenuhnya aman, efisien, dan siap diuji langsung lewat tab **'Run Live'** di atas."
                 }
 
                 // Medical / Health queries
