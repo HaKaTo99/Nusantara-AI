@@ -32,7 +32,7 @@ import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -453,7 +453,7 @@ fun ToolsSandboxTabContent() {
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.ShowChart, contentDescription = null, tint = EmeraldGreen)
+                    Icon(Icons.AutoMirrored.Filled.ShowChart, contentDescription = null, tint = EmeraldGreen)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Data Pasar Saham & Kripto Global (Live)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }

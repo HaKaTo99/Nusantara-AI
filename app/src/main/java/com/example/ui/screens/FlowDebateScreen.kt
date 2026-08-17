@@ -32,7 +32,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CompareArrows
+import androidx.compose.material.icons.automirrored.filled.CompareArrows
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Button
@@ -392,7 +392,7 @@ fun FlowDebateScreen(
 @Composable
 private fun Icon_CompareArrows() {
     androidx.compose.material3.Icon(
-        imageVector = Icons.Default.CompareArrows,
+        imageVector = Icons.AutoMirrored.Filled.CompareArrows,
         contentDescription = null,
         tint = NeonViolet,
         modifier = Modifier.size(20.dp)
