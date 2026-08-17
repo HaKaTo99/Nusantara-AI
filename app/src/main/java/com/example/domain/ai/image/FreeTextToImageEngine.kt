@@ -78,11 +78,18 @@ class FreeTextToImageEngine(private val context: Context) {
                 iconEmoji = "⚡"
             ),
             FreeImageModel(
-                id = "turbo",
-                name = "Stable Diffusion XL Turbo",
+                id = "sdxl",
+                name = "Stable Diffusion XL (SDXL)",
                 provider = "Stability AI (Free Open Source)",
-                description = "Kecepatan generasi ultra-cepat, akurasi prompt tinggi dan komposisi dinamis.",
+                description = "Generasi resolusi tinggi dengan akurasi prompt mendalam dan komposisi sinematik.",
                 iconEmoji = "🎨"
+            ),
+            FreeImageModel(
+                id = "turbo",
+                name = "SDXL Turbo",
+                provider = "Stability AI (Free Fast Engine)",
+                description = "Kecepatan generasi instan 1-step inference dengan detail tajam.",
+                iconEmoji = "🚀"
             ),
             FreeImageModel(
                 id = "flux-realism",
@@ -186,7 +193,7 @@ class FreeTextToImageEngine(private val context: Context) {
 
         // Mode Online: Menggunakan Pollinations Free Open Neural Engine
         val effectiveModelParam = when (modelId) {
-            "turbo" -> "turbo"
+            "sdxl", "turbo" -> "turbo"
             "flux-realism" -> "flux-realism"
             "flux-anime" -> "flux-anime"
             "nusantara-heritage" -> "flux"

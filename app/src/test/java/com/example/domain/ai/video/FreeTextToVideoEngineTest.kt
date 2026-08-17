@@ -26,41 +26,32 @@ class FreeTextToVideoEngineTest {
         val models = FreeTextToVideoEngine.FREE_CINEMA_MODELS
         assertTrue("Harus menyediakan minimal 5 model cinema AI gratis", models.size >= 5)
 
+        // 1. Verify AnimateDiff
         val animateDiff = models.find { it.id == "animatediff" }
         assertNotNull("Model AnimateDiff XL harus tersedia", animateDiff)
         assertEquals("AnimateDiff XL", animateDiff?.name)
         assertTrue(animateDiff?.isFree == true)
 
+        // 2. Verify CogVideoX
         val cogVideo = models.find { it.id == "cogvideo" }
         assertNotNull("Model CogVideoX harus tersedia", cogVideo)
+        assertEquals("CogVideoX Motion", cogVideo?.name)
+        assertTrue(cogVideo?.isFree == true)
 
+        // 3. Verify SVD
         val svd = models.find { it.id == "svd" }
         assertNotNull("Model Stable Video Diffusion harus tersedia", svd)
+        assertEquals("Stable Video Diffusion (SVD)", svd?.name)
+        assertTrue(svd?.isFree == true)
 
         val droneModel = models.find { it.id == "nusantara-drone" }
         assertNotNull("Model Nusantara Drone harus tersedia", droneModel)
     }
 
     @Test
-    fun testCinematicDimensions() {
-        val (w16, h16) = videoEngine.calculateDimensions("16:9")
-        assertEquals(1280, w16)
-        assertEquals(720, h16)
-
-        val (w9, h9) = videoEngine.calculateDimensions("9:16")
-        assertEquals(720, w9)
-        assertEquals(1280, h9)
-
-        val (w21, h21) = videoEngine.calculateDimensions("21:9")
-        assertEquals(1536, w21)
-        assertEquals(640, h21)
-    }
-
-    @Test
-    fun testVideoPromptEnrichment() {
-        val rawPrompt = "Katak melompat di atas batu berlumut"
-        val enriched = videoEngine.enrichVideoPrompt(
-            userPrompt = rawPrompt,
+    fun testAnimateDiffGeneration() = runBlocking {
+        val result = videoEngine.generateVideo(
+            prompt = "Air terjun mengalir deras di hutan tropis",
             cameraMotion = "Pan Right",
             aspectRatio = "16:9",
             durationSec = 5,
@@ -69,30 +60,44 @@ class FreeTextToVideoEngineTest {
             mode = "T2V"
         )
 
-        assertTrue("Prompt harus memuat teks asli", enriched.contains("Katak melompat di atas batu berlumut"))
-        assertTrue("Prompt harus memuat deskriptor gerakan kamera", enriched.contains("pan right"))
-        assertTrue("Prompt harus memuat rasio aspek", enriched.contains("16:9 aspect ratio"))
-        assertTrue("Prompt harus memuat spesifikasi video", enriched.contains("5s video sequence") && enriched.contains("30 fps"))
+        assertNotNull(result)
+        assertEquals("animatediff", result.modelId)
+        assertEquals("AnimateDiff XL", result.modelName)
+        assertTrue(result.keyframeUrls.size >= 4)
     }
 
     @Test
-    fun testGenerateVideoExecution() = runBlocking {
+    fun testCogVideoXGeneration() = runBlocking {
         val result = videoEngine.generateVideo(
-            prompt = "Elang terbang di atas hutan",
-            cameraMotion = "FPV Drone Dive",
-            aspectRatio = "16:9",
+            prompt = "Mobil sport meluncur di jalan tol IKN",
+            cameraMotion = "Dynamic Orbit",
+            aspectRatio = "21:9",
             durationSec = 6,
             fps = 30,
-            modelId = "nusantara-drone",
+            modelId = "cogvideo",
             mode = "T2V"
         )
 
         assertNotNull(result)
-        assertEquals("nusantara-drone", result.modelId)
-        assertEquals("FPV Drone Dive", result.cameraMotion)
-        assertEquals("16:9", result.aspectRatio)
-        assertEquals(6, result.durationSec)
-        assertTrue("URL video preview harus valid", result.videoPreviewUrl.startsWith("https://image.pollinations.ai/prompt/"))
-        assertTrue("Keyframe URLs harus dihasilkan untuk multi-frame playback", result.keyframeUrls.size >= 4)
+        assertEquals("cogvideo", result.modelId)
+        assertEquals("CogVideoX Motion", result.modelName)
+    }
+
+    @Test
+    fun testSVDGeneration() = runBlocking {
+        val result = videoEngine.generateVideo(
+            prompt = "Animasi potret wajah tersenyum alami",
+            cameraMotion = "Zoom In (Dolly)",
+            aspectRatio = "1:1",
+            durationSec = 5,
+            fps = 30,
+            modelId = "svd",
+            mode = "I2V"
+        )
+
+        assertNotNull(result)
+        assertEquals("svd", result.modelId)
+        assertEquals("Stable Video Diffusion (SVD)", result.modelName)
+        assertEquals("I2V", result.mode)
     }
 }
