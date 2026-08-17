@@ -64,9 +64,10 @@ android {
     buildConfig = true
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
-  dependenciesInfo {
-    includeInApk = false
-    includeInBundle = true
+  sourceSets {
+    getByName("main") {
+      jniLibs.srcDirs("src/main/jniLibs")
+    }
   }
 }
 
