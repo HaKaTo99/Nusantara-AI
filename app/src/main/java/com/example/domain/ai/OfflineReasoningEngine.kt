@@ -205,6 +205,20 @@ object OfflineReasoningEngine {
                 "4. Aduk merata dengan api besar selama 2-3 menit hingga aroma khas keluar. Sajikan hangat!"
             }
 
+            // Astronomy / Galaksi
+            lower.contains("galaksi") || lower.contains("bima sakti") || lower.contains("andromeda") || lower.contains("tata surya") || lower.contains("alam semesta") || lower.contains("astronomi") -> {
+                "### 🌌 Galaksi-Galaksi Utama di Alam Semesta\n\n" +
+                "Berikut adalah daftar beberapa galaksi terpenting yang telah dipetakan oleh ilmu astronomi modern:\n\n" +
+                "1. **Galaksi Bima Sakti (Milky Way):** Galaksi spiral berpalang tempat Tata Surya dan Bumi kita berada, berdiameter sekitar 100.000 tahun cahaya dengan 100–400 miliar bintang.\n" +
+                "2. **Galaksi Andromeda (Messier 31 / M31):** Galaksi spiral raksasa terdekat dari Bima Sakti (~2,5 juta tahun cahaya) dan merupakan galaksi terbesar di Grup Lokal kita.\n" +
+                "3. **Galaksi Triangulum (Messier 33 / M33):** Galaksi spiral terbesar ketiga di Grup Lokal setelah Andromeda dan Bima Sakti.\n" +
+                "4. **Awan Magellan Besar & Kecil (LMC & SMC):** Dua galaksi satelit katai tak beraturan yang mengorbit Bima Sakti.\n" +
+                "5. **Galaksi Sombrero (Messier 104 / M104):** Galaksi dengan tonjolan inti cemerlang dan cincin debu tebal menyerupai topi khas sombrero Meksiko.\n" +
+                "6. **Galaksi Pusaran (Whirlpool Galaxy / Messier 51):** Galaksi spiral klasik dengan lengan spiral yang sangat simetris dan indah.\n" +
+                "7. **Messier 87 (M87):** Galaksi elips raksasa di Gugus Virgo tempat lubang hitam supermasif pertama berhasil dipotret oleh teleskop EHT.\n" +
+                "8. **Galaksi Centaurus A (NGC 5128):** Salah satu galaksi radio paling terang di langit selatan dengan pita debu masif di ekuatornya."
+            }
+
             // Salam & Sapaan
             lower == "halo" || lower == "hai" || lower == "selamat pagi" || lower == "selamat siang" || lower == "selamat malam" || lower == "assalamualaikum" -> {
                 "Halo! Selamat datang di **Nusantara AI**. Saya adalah asisten cerdas berkinerja tinggi yang siap membantu Anda dalam komputasi, penalaran matematika, koding, analisis data, dan eksplorasi multimodal.\n\n" +
@@ -246,7 +260,9 @@ object OfflineReasoningEngine {
                 answer = factualAnswer
             } else when {
                 // Code / HTML / UI Artifact queries
-                lower.contains("html") || lower.contains("svg") || lower.contains("buatkan website") || lower.contains("ui") || lower.contains("desain") -> {
+                lower.contains("html") || lower.contains("svg") || lower.contains("buatkan website") ||
+                lower.contains("user interface") || lower.contains("tampilan ui") || lower.contains("desain website") ||
+                Regex("""\bui\b""").containsMatchIn(lower) || Regex("""\bfrontend\b""").containsMatchIn(lower) -> {
                     steps.add("🛠️ [Code Engine] Memetakan struktur visual dan komponen interaktif")
                     steps.add("🎨 [Render Matrix] Menghasilkan live artifact dengan styling modern")
                     artifactType = "HTML"
