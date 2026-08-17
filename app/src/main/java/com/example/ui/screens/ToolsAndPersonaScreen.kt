@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,15 +17,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
@@ -32,7 +31,6 @@ import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -43,7 +41,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -82,6 +79,10 @@ fun ToolsAndPersonaScreen(
     var selectedTab by remember { mutableIntStateOf(0) } // 0 = Personas & Bot AI, 1 = Tools Sandbox
     var showCreateDialog by remember { mutableStateOf(false) }
 
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+    val tabActiveColor = if (isDark) ElectricCyan else Color(0xFF0F52BA)
+    val tabInactiveColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -89,28 +90,36 @@ fun ToolsAndPersonaScreen(
     ) {
         TabRow(
             selectedTabIndex = selectedTab,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = ElectricCyan
+            containerColor = if (isDark) MaterialTheme.colorScheme.surface else Color(0xFFFFFFFF),
+            contentColor = tabActiveColor,
+            modifier = Modifier.border(
+                width = if (isDark) 0.dp else 1.dp,
+                color = if (isDark) Color.Transparent else Color(0xFFE2E8F0)
+            )
         ) {
             Tab(
                 selected = selectedTab == 0,
                 onClick = { selectedTab = 0 },
+                selectedContentColor = tabActiveColor,
+                unselectedContentColor = tabInactiveColor,
                 text = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(16.dp), tint = if (selectedTab == 0) tabActiveColor else tabInactiveColor)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Karakter & Bot AI", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("Karakter & Bot AI", fontSize = 12.sp, fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Medium, color = if (selectedTab == 0) tabActiveColor else tabInactiveColor)
                     }
                 }
             )
             Tab(
                 selected = selectedTab == 1,
                 onClick = { selectedTab = 1 },
+                selectedContentColor = tabActiveColor,
+                unselectedContentColor = tabInactiveColor,
                 text = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Build, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Build, contentDescription = null, modifier = Modifier.size(16.dp), tint = if (selectedTab == 1) tabActiveColor else tabInactiveColor)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Alat Canggih & Sandbox", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("Alat Canggih & Sandbox", fontSize = 12.sp, fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Medium, color = if (selectedTab == 1) tabActiveColor else tabInactiveColor)
                     }
                 }
             )
@@ -146,6 +155,12 @@ fun PersonaTabContent(
     onSelect: (PersonaEntity) -> Unit,
     onOpenCreate: () -> Unit
 ) {
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+    val textPrimaryColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+    val textSecondaryColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF334155)
+    val primaryAccent = if (isDark) ElectricCyan else Color(0xFF0F52BA)
+    val emeraldAccent = if (isDark) EmeraldGreen else Color(0xFF047857)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -161,24 +176,27 @@ fun PersonaTabContent(
                     text = "🤖 Karakter Asisten Cerdas",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = textPrimaryColor
                 )
                 Text(
                     text = "Pilih kepribadian atau buat AI kustom Anda",
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = textSecondaryColor
                 )
             }
 
             Button(
                 onClick = onOpenCreate,
-                colors = ButtonDefaults.buttonColors(containerColor = ElectricCyan),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isDark) ElectricCyan else Color(0xFF2563EB),
+                    contentColor = if (isDark) Color(0xFF003344) else Color.White
+                ),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.testTag("create_custom_bot_button")
             ) {
-                Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Add, contentDescription = null, tint = if (isDark) Color(0xFF003344) else Color.White, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Buat Bot", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("Buat Bot", color = if (isDark) Color(0xFF003344) else Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -193,14 +211,14 @@ fun PersonaTabContent(
                 Card(
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                                         else MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = if (isSelected) (if (isDark) Color(0xFF004D66) else Color(0xFFEFF6FF))
+                                         else (if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF))
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .border(
                             width = if (isSelected) 1.5.dp else 1.dp,
-                            color = if (isSelected) ElectricCyan else Color.Transparent,
+                            color = if (isSelected) primaryAccent else (if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)),
                             shape = RoundedCornerShape(14.dp)
                         )
                         .clip(RoundedCornerShape(14.dp))
@@ -220,26 +238,27 @@ fun PersonaTabContent(
                                     text = persona.name,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) ElectricCyan else MaterialTheme.colorScheme.onSurface
+                                    color = if (isSelected) primaryAccent else textPrimaryColor
                                 )
                                 if (persona.isCustom) {
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Box(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(6.dp))
-                                            .background(NeonViolet.copy(alpha = 0.2f))
+                                            .background(if (isDark) NeonViolet.copy(alpha = 0.25f) else Color(0xFFF3E8FF))
+                                            .border(1.dp, if (isDark) NeonViolet else Color(0xFF7E22CE), RoundedCornerShape(6.dp))
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
-                                        Text("Kustom", fontSize = 9.sp, color = NeonViolet, fontWeight = FontWeight.Bold)
+                                        Text("Kustom", fontSize = 9.sp, color = if (isDark) NeonViolet else Color(0xFF7E22CE), fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
-                            Text(text = persona.role, fontSize = 11.sp, color = EmeraldGreen, fontWeight = FontWeight.SemiBold)
-                            Text(text = persona.description, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+                            Text(text = persona.role, fontSize = 11.sp, color = emeraldAccent, fontWeight = FontWeight.SemiBold)
+                            Text(text = persona.description, fontSize = 11.sp, color = textSecondaryColor, maxLines = 2)
                         }
 
                         if (isSelected) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = "Active", tint = ElectricCyan, modifier = Modifier.size(22.dp))
+                            Icon(Icons.Default.CheckCircle, contentDescription = "Active", tint = primaryAccent, modifier = Modifier.size(20.dp))
                         }
                     }
                 }
@@ -255,114 +274,119 @@ fun CreateCustomPersonaDialog(
 ) {
     var name by remember { mutableStateOf("") }
     var role by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
+    var desc by remember { mutableStateOf("") }
     var systemPrompt by remember { mutableStateOf("") }
-    var avatarEmoji by remember { mutableStateOf("🧙‍♂️") }
+    var avatarEmoji by remember { mutableStateOf("🤖") }
     var temperature by remember { mutableFloatStateOf(0.7f) }
 
-    val emojis = listOf("🧙‍♂️", "👩‍⚕️", "👨‍🏫", "🕵️", "🧑‍🚀", "🤖", "🐱", "🚀")
+    val emojiOptions = listOf("🤖", "👨‍💻", "🦉", "⚔️", "🧘", "💼", "🎨", "🔬", "🛡️", "🚀")
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text("Buat Asisten AI Kustom", fontWeight = FontWeight.Bold)
-        },
+        title = { Text("Buat Karakter / Bot AI Kustom", fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text("Pilih Avatar:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    emojis.forEach { emo ->
-                        Surface(
-                            shape = CircleShape,
-                            color = if (avatarEmoji == emo) ElectricCyan.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .clickable { avatarEmoji = emo }
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(text = emo, fontSize = 18.sp)
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nama Bot (misal: Chef Nusantara)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-                OutlinedTextField(
-                    value = role,
-                    onValueChange = { role = it },
-                    label = { Text("Peran / Profesi") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Deskripsi Singkat") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-                OutlinedTextField(
-                    value = systemPrompt,
-                    onValueChange = { systemPrompt = it },
-                    label = { Text("Instruksi Sistem (System Prompt)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    minLines = 3
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
+                Text("Pilih Avatar Emoji:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Kreativitas (Temperature):", fontSize = 11.sp)
-                    Text("%.1f".format(temperature), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = ElectricCyan)
+                    emojiOptions.take(5).forEach { emoji ->
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(if (avatarEmoji == emoji) (if (isDark) ElectricCyan.copy(alpha = 0.3f) else Color(0xFFEFF6FF)) else Color.Transparent)
+                                .border(
+                                    width = if (avatarEmoji == emoji) 2.dp else 1.dp,
+                                    color = if (avatarEmoji == emoji) (if (isDark) ElectricCyan else Color(0xFF0F52BA)) else Color(0xFFCBD5E1),
+                                    shape = CircleShape
+                                )
+                                .clickable { avatarEmoji = emoji },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = emoji, fontSize = 18.sp)
+                        }
+                    }
                 }
-                Slider(
-                    value = temperature,
-                    onValueChange = { temperature = it },
-                    valueRange = 0.0f..1.0f,
-                    colors = SliderDefaults.colors(thumbColor = ElectricCyan, activeTrackColor = ElectricCyan)
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nama Asisten / Bot") },
+                    placeholder = { Text("Contoh: Ahli Cloud GCP Nusantara") },
+                    modifier = Modifier.fillMaxWidth()
                 )
+
+                OutlinedTextField(
+                    value = role,
+                    onValueChange = { role = it },
+                    label = { Text("Peran / Spesialisasi") },
+                    placeholder = { Text("Contoh: DevOps & Security Engineer") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = desc,
+                    onValueChange = { desc = it },
+                    label = { Text("Deskripsi Singkat") },
+                    placeholder = { Text("Contoh: Memberikan solusi arsitektur cloud tingkat lanjut...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 2
+                )
+
+                OutlinedTextField(
+                    value = systemPrompt,
+                    onValueChange = { systemPrompt = it },
+                    label = { Text("Instruksi Sistem (System Prompt)") },
+                    placeholder = { Text("Anda adalah asisten pakar cloud...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3
+                )
+
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Kreativitas (Temperature):", fontSize = 12.sp)
+                        Text(String.format("%.1f", temperature), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Slider(
+                        value = temperature,
+                        onValueChange = { temperature = it },
+                        valueRange = 0.0f..1.0f,
+                        steps = 9
+                    )
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    if (name.isNotBlank()) {
-                        onCreate(name, role, description, systemPrompt, avatarEmoji, temperature)
+                    if (name.isNotBlank() && systemPrompt.isNotBlank()) {
+                        onCreate(name, role.ifBlank { "Asisten Kustom" }, desc.ifBlank { "Dibuat oleh pengguna" }, systemPrompt, avatarEmoji, temperature)
                     }
                 },
-                enabled = name.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = ElectricCyan),
-                modifier = Modifier.testTag("submit_custom_bot_button")
+                enabled = name.isNotBlank() && systemPrompt.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isDark) ElectricCyan else Color(0xFF2563EB),
+                    contentColor = if (isDark) Color(0xFF003344) else Color.White
+                )
             ) {
-                Text("Simpan Bot", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text("Simpan Bot")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Batal") }
+            TextButton(onClick = onDismiss) {
+                Text("Batal")
+            }
         }
     )
 }
@@ -370,12 +394,17 @@ fun CreateCustomPersonaDialog(
 @Composable
 fun ToolsSandboxTabContent() {
     val context = LocalContext.current
-    var sandboxCode by remember {
-        mutableStateOf("val numbers = listOf(10, 20, 30, 40)\nval sum = numbers.sum()\nprintln(\"Total: \$sum\")")
-    }
-    var executionOutput by remember { mutableStateOf("Stdout: Total: 100\nExecution Time: 4.2ms\nMemory: 12KB") }
-    var translateSource by remember { mutableStateOf("Kecerdasan buatan berbasis privasi tinggi") }
-    var translateResult by remember { mutableStateOf("High-privacy edge artificial intelligence") }
+    var sandboxCode by remember { mutableStateOf("fun main() {\n    val items = listOf(\"Nusantara\", \"AI\", \"SuperApp\")\n    println(items.joinToString(\" • \"))\n}") }
+    var executionOutput by remember { mutableStateOf("Belum ada output eksekusi.") }
+    var translateSource by remember { mutableStateOf("Kecerdasan buatan berdaulat untuk kemajuan bangsa Indonesia.") }
+    var translateResult by remember { mutableStateOf("Sovereign artificial intelligence for the advancement of the Indonesian nation.") }
+
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+    val textPrimaryColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+    val textSecondaryColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF334155)
+    val primaryAccent = if (isDark) ElectricCyan else Color(0xFF0F52BA)
+    val emeraldAccent = if (isDark) EmeraldGreen else Color(0xFF047857)
+    val violetAccent = if (isDark) NeonViolet else Color(0xFF6D28D9)
 
     Column(
         modifier = Modifier
@@ -387,12 +416,12 @@ fun ToolsSandboxTabContent() {
             text = "🛠️ Alat Canggih & Sandbox Integrasi",
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = textPrimaryColor
         )
         Text(
             text = "Sandbox eksekusi kode, cuaca real-time, ticker pasar & penerjemah 50+ bahasa",
             fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = textSecondaryColor
         )
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -400,14 +429,15 @@ fun ToolsSandboxTabContent() {
         // Tool 1: Code Execution Sandbox
         Card(
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF)),
+            border = BorderStroke(1.dp, if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Code, contentDescription = null, tint = ElectricCyan)
+                    Icon(Icons.Default.Code, contentDescription = null, tint = primaryAccent)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Eksekusi Kode Kotlin / Python Sandbox", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Eksekusi Kode Kotlin / Python Sandbox", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textPrimaryColor)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
@@ -423,12 +453,15 @@ fun ToolsSandboxTabContent() {
                         executionOutput = "Stdout: Kode dieksekusi sukses secara deterministik di sandbox perangkat.\nHasil komputasi: OK\nLatensi: 6.8ms"
                         Toast.makeText(context, "Kode berhasil dijalankan di sandbox lokal!", Toast.LENGTH_SHORT).show()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = ElectricCyan),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isDark) ElectricCyan else Color(0xFF2563EB),
+                        contentColor = if (isDark) Color(0xFF003344) else Color.White
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black)
+                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = if (isDark) Color(0xFF003344) else Color.White)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Jalankan Sandbox", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text("Jalankan Sandbox", fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Box(
@@ -438,7 +471,7 @@ fun ToolsSandboxTabContent() {
                         .background(Color(0xFF0F172A))
                         .padding(8.dp)
                 ) {
-                    Text(text = executionOutput, fontFamily = FontFamily.Monospace, fontSize = 10.sp, color = EmeraldGreen)
+                    Text(text = executionOutput, fontFamily = FontFamily.Monospace, fontSize = 10.sp, color = Color(0xFF00FFA3))
                 }
             }
         }
@@ -448,24 +481,25 @@ fun ToolsSandboxTabContent() {
         // Tool 2: Global Crypto & Market Ticker
         Card(
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF)),
+            border = BorderStroke(1.dp, if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.AutoMirrored.Filled.ShowChart, contentDescription = null, tint = EmeraldGreen)
+                    Icon(Icons.AutoMirrored.Filled.ShowChart, contentDescription = null, tint = emeraldAccent)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Data Pasar Saham & Kripto Global (Live)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Data Pasar Saham & Kripto Global (Live)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textPrimaryColor)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    MarketTickerItem("BTC/USD", "$94,250", "+3.4%")
-                    MarketTickerItem("ETH/USD", "$3,480", "+2.1%")
-                    MarketTickerItem("BBCA.JK", "Rp 10.450", "+1.2%")
-                    MarketTickerItem("NVDA", "$138.5", "+4.8%")
+                    MarketTickerItem("BTC/USD", "$94,250", "+3.4%", isDark)
+                    MarketTickerItem("ETH/USD", "$3,480", "+2.1%", isDark)
+                    MarketTickerItem("BBCA.JK", "Rp 10.450", "+1.2%", isDark)
+                    MarketTickerItem("NVDA", "$138.5", "+4.8%", isDark)
                 }
             }
         }
@@ -475,27 +509,28 @@ fun ToolsSandboxTabContent() {
         // Tool 3: Translator 50+ Languages
         Card(
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF)),
+            border = BorderStroke(1.dp, if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Translate, contentDescription = null, tint = NeonViolet)
+                    Icon(Icons.Default.Translate, contentDescription = null, tint = violetAccent)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Penerjemah Instan 50+ Bahasa", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Penerjemah Instan 50+ Bahasa", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textPrimaryColor)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = translateSource,
                     onValueChange = { translateSource = it },
-                    label = { Text("Teks Sumber (Indonesia)") },
+                    label = { Text("Teks Sumber (Indonesia)", color = textSecondaryColor) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 OutlinedTextField(
                     value = translateResult,
                     onValueChange = { translateResult = it },
-                    label = { Text("Hasil Terjemahan (English)") },
+                    label = { Text("Hasil Terjemahan (English)", color = textSecondaryColor) },
                     modifier = Modifier.fillMaxWidth(),
                     readOnly = true
                 )
@@ -505,10 +540,10 @@ fun ToolsSandboxTabContent() {
 }
 
 @Composable
-fun MarketTickerItem(symbol: String, price: String, change: String) {
+fun MarketTickerItem(symbol: String, price: String, change: String, isDark: Boolean = true) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = symbol, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-        Text(text = price, fontSize = 11.sp, fontWeight = FontWeight.Black, color = ElectricCyan)
-        Text(text = change, fontSize = 9.sp, color = EmeraldGreen, fontWeight = FontWeight.Bold)
+        Text(text = symbol, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A))
+        Text(text = price, fontSize = 11.sp, fontWeight = FontWeight.Black, color = if (isDark) ElectricCyan else Color(0xFF0F52BA))
+        Text(text = change, fontSize = 9.sp, color = if (isDark) EmeraldGreen else Color(0xFF047857), fontWeight = FontWeight.Bold)
     }
 }

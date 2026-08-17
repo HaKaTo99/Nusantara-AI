@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,12 +37,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.theme.ElectricCyan
 import com.example.ui.components.DiagnosticsDialog
 import com.example.ui.components.ModelSelectorDialog
 import com.example.ui.components.SecurityBadgeDialog
@@ -181,9 +184,17 @@ fun NusantaraApp(viewModel: MainViewModel) {
             )
         },
         bottomBar = {
+            val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+            val navPrimary = if (isDark) ElectricCyan else Color(0xFF0F52BA)
+            val navInactive = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+
             NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 3.dp
+                containerColor = if (isDark) MaterialTheme.colorScheme.surface else Color(0xFFFFFFFF),
+                tonalElevation = if (isDark) 3.dp else 1.dp,
+                modifier = Modifier.border(
+                    width = if (isDark) 0.dp else 1.dp,
+                    color = if (isDark) Color.Transparent else Color(0xFFE2E8F0)
+                )
             ) {
                 navItems.forEach { destination ->
                     val selected = currentDestination == destination
@@ -201,16 +212,16 @@ fun NusantaraApp(viewModel: MainViewModel) {
                             Text(
                                 text = destination.label,
                                 fontSize = 11.sp,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                                 maxLines = 1
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            selectedIconColor = navPrimary,
+                            selectedTextColor = navPrimary,
+                            indicatorColor = if (isDark) ElectricCyan.copy(alpha = 0.2f) else Color(0xFFEFF6FF),
+                            unselectedIconColor = navInactive,
+                            unselectedTextColor = navInactive
                         ),
                         modifier = Modifier.testTag(destination.tag)
                     )

@@ -119,57 +119,53 @@ fun MultimodalScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Tab Header for all 9 Multimodal Capabilities
+        val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+        val tabActiveColor = if (isDark) ElectricCyan else Color(0xFF0F52BA)
+        val tabInactiveColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+
+        // Tab Header for all Multimodal Capabilities (High Contrast)
         ScrollableTabRow(
             selectedTabIndex = selectedTab,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = ElectricCyan,
-            edgePadding = 12.dp
+            containerColor = if (isDark) MaterialTheme.colorScheme.surface else Color(0xFFFFFFFF),
+            contentColor = tabActiveColor,
+            edgePadding = 12.dp,
+            modifier = Modifier.border(
+                width = if (isDark) 0.dp else 1.dp,
+                color = if (isDark) Color.Transparent else Color(0xFFE2E8F0)
+            )
         ) {
-            Tab(
-                selected = selectedTab == 0,
-                onClick = { selectedTab = 0 },
-                text = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Gambar & OCR", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
+            val tabList = listOf(
+                Icons.Default.Image to "Gambar & OCR",
+                Icons.Default.Videocam to "Video & Motion",
+                Icons.Default.MusicNote to "Musik & Audio",
+                Icons.Default.Description to "Dokumen & Vision"
             )
-            Tab(
-                selected = selectedTab == 1,
-                onClick = { selectedTab = 1 },
-                text = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Videocam, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Video & Motion", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            tabList.forEachIndexed { index, (icon, title) ->
+                val isSelected = selectedTab == index
+                Tab(
+                    selected = isSelected,
+                    onClick = { selectedTab = index },
+                    selectedContentColor = tabActiveColor,
+                    unselectedContentColor = tabInactiveColor,
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                icon,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = if (isSelected) tabActiveColor else tabInactiveColor
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = title,
+                                fontSize = 12.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) tabActiveColor else tabInactiveColor
+                            )
+                        }
                     }
-                }
-            )
-            Tab(
-                selected = selectedTab == 2,
-                onClick = { selectedTab = 2 },
-                text = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.MusicNote, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Musik & Audio", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            )
-            Tab(
-                selected = selectedTab == 3,
-                onClick = { selectedTab = 3 },
-                text = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Dokumen & Vision", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            )
+                )
+            }
         }
 
         when (selectedTab) {
@@ -202,7 +198,9 @@ fun VisualStudioTab(
     var activeMode by remember { mutableStateOf("T2I") } // "T2I" = Text-to-Image, "I2T" = Image-to-Text
 
     val isDark = MaterialTheme.colorScheme.background.red < 0.5f
-    val primaryColor = MaterialTheme.colorScheme.primary
+    val primaryColor = if (isDark) ElectricCyan else Color(0xFF0F52BA)
+    val textPrimaryColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+    val textSecondaryColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF334155)
 
     val styles = listOf(
         "Cinematic Realistic",
@@ -257,12 +255,12 @@ fun VisualStudioTab(
                     text = "🎨 Studio Gambar (Free AI Models)",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = textPrimaryColor
                 )
                 Text(
                     text = "FLUX.1 Schnell • SDXL Turbo • Flux Realism (100% Free)",
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = textSecondaryColor
                 )
             }
         }
@@ -273,7 +271,15 @@ fun VisualStudioTab(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
+                .background(
+                    if (isDark) Color(0xFF182235) else Color(0xFFF1F5F9),
+                    RoundedCornerShape(10.dp)
+                )
+                .border(
+                    width = 1.dp,
+                    color = if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1),
+                    shape = RoundedCornerShape(10.dp)
+                )
                 .padding(4.dp)
         ) {
             listOf("T2I" to "Text to Image 🖼️", "I2T" to "Image to Text / OCR 🔍").forEach { (mode, label) ->
@@ -282,7 +288,7 @@ fun VisualStudioTab(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) primaryColor else Color.Transparent)
+                        .background(if (isSelected) (if (isDark) Color(0xFF004D66) else Color(0xFF2563EB)) else Color.Transparent)
                         .clickable { activeMode = mode }
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
@@ -290,8 +296,8 @@ fun VisualStudioTab(
                     Text(
                         text = label,
                         fontSize = 12.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) Color.White else textSecondaryColor
                     )
                 }
             }
@@ -301,7 +307,7 @@ fun VisualStudioTab(
 
         if (activeMode == "T2I") {
             // Free AI Model Selector
-            Text(text = "Pilih Model AI Gratis (Free Models):", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Text(text = "Pilih Model AI Gratis (Free Models):", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
             Spacer(modifier = Modifier.height(6.dp))
 
             Row(
@@ -314,13 +320,13 @@ fun VisualStudioTab(
                     val isSelected = selectedModelId == model.id
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = if (isSelected) primaryColor.copy(alpha = if (isDark) 0.25f else 0.15f)
-                                else MaterialTheme.colorScheme.surface,
+                        color = if (isSelected) (if (isDark) Color(0xFF004D66) else Color(0xFFEFF6FF))
+                                else (if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF)),
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
                             .border(
                                 width = if (isSelected) 2.dp else 1.dp,
-                                color = if (isSelected) primaryColor else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                color = if (isSelected) primaryColor else (if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)),
                                 shape = RoundedCornerShape(12.dp)
                             )
                             .clickable { selectedModelId = model.id }
@@ -336,7 +342,7 @@ fun VisualStudioTab(
                                     text = model.name,
                                     fontSize = 11.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface
+                                    color = if (isSelected) primaryColor else textPrimaryColor
                                 )
                             }
                         }
@@ -350,8 +356,8 @@ fun VisualStudioTab(
             OutlinedTextField(
                 value = visualPrompt,
                 onValueChange = { visualPrompt = it },
-                label = { Text("Deskripsikan Gambar yang Ingin Dihasilkan") },
-                placeholder = { Text("Contoh: Candi Borobudur bercahaya neon di masa depan dengan kapal terbang...") },
+                label = { Text("Deskripsikan Gambar yang Ingin Dihasilkan", color = textSecondaryColor) },
+                placeholder = { Text("Contoh: Candi Borobudur bercahaya neon di masa depan dengan kapal terbang...", color = if (isDark) Color(0xFF64748B) else Color(0xFF94A3B8)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("visual_prompt_input"),
@@ -362,7 +368,7 @@ fun VisualStudioTab(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Prompt Inspiration Chips
-            Text(text = "💡 Inspirasi Cepat:", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = "💡 Inspirasi Cepat:", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = textSecondaryColor)
             Spacer(modifier = Modifier.height(4.dp))
             Row(
                 modifier = Modifier
@@ -373,7 +379,8 @@ fun VisualStudioTab(
                 inspirationPrompts.forEach { insp ->
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                        color = if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)),
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
                             .clickable { visualPrompt = insp.substringAfter(" ") }
@@ -381,7 +388,7 @@ fun VisualStudioTab(
                         Text(
                             text = insp.take(35) + "...",
                             fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = textPrimaryColor,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
@@ -391,7 +398,7 @@ fun VisualStudioTab(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Aspect Ratio Selector
-            Text(text = "Pilih Rasio Aspek:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text(text = "Pilih Rasio Aspek:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = textPrimaryColor)
             Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -401,7 +408,11 @@ fun VisualStudioTab(
                     val isSelected = selectedRatio == ratio
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = if (isSelected) primaryColor else MaterialTheme.colorScheme.surfaceVariant,
+                        color = if (isSelected) (if (isDark) Color(0xFF004D66) else Color(0xFF2563EB)) else (if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF)),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (isSelected) (if (isDark) ElectricCyan else Color(0xFF0F52BA)) else (if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1))
+                        ),
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .clickable { selectedRatio = ratio }
@@ -410,7 +421,7 @@ fun VisualStudioTab(
                             text = ratio,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                            color = if (isSelected) Color.White else textPrimaryColor,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                     }
@@ -420,7 +431,7 @@ fun VisualStudioTab(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Style Selector
-            Text(text = "Gaya Visual (Style):", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text(text = "Gaya Visual (Style):", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = textPrimaryColor)
             Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier
@@ -432,7 +443,11 @@ fun VisualStudioTab(
                     val isSelected = selectedStyle == style
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceVariant,
+                        color = if (isSelected) (if (isDark) Color(0xFF3B1E6D) else Color(0xFF6D28D9)) else (if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF)),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (isSelected) (if (isDark) NeonViolet else Color(0xFF6D28D9)) else (if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1))
+                        ),
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
                             .clickable { selectedStyle = style }
@@ -441,7 +456,7 @@ fun VisualStudioTab(
                             text = style,
                             fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface,
+                            color = if (isSelected) Color.White else textPrimaryColor,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                         )
                     }
@@ -454,20 +469,25 @@ fun VisualStudioTab(
             Button(
                 onClick = { executeGeneration() },
                 enabled = visualPrompt.isNotBlank() && !isGenerating,
-                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isDark) ElectricCyan else Color(0xFF2563EB),
+                    contentColor = if (isDark) Color(0xFF003344) else Color.White,
+                    disabledContainerColor = if (isDark) Color(0xFF1E293B) else Color(0xFFE2E8F0),
+                    disabledContentColor = if (isDark) Color(0xFF64748B) else Color(0xFF475569)
+                ),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("generate_image_button")
             ) {
                 if (isGenerating) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Sedang Menghasilkan Gambar...", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                    Text("Sedang Menghasilkan Gambar...", color = Color.White, fontWeight = FontWeight.Bold)
                 } else {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = if (visualPrompt.isNotBlank()) (if (isDark) Color(0xFF003344) else Color.White) else Color.Gray)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Generasi Gambar AI (Free Model)", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                    Text("Generasi Gambar AI (Free Model)", fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -692,7 +712,9 @@ fun VideoStudioTab(
     var currentFrameIndex by remember { mutableIntStateOf(0) }
 
     val isDark = MaterialTheme.colorScheme.background.red < 0.5f
-    val primaryColor = MaterialTheme.colorScheme.primary
+    val primaryColor = if (isDark) ElectricCyan else Color(0xFF0F52BA)
+    val textPrimaryColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+    val textSecondaryColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF334155)
 
     val aspectRatios = listOf("16:9", "9:16", "21:9", "1:1")
     val cameraMotions = listOf("Pan Right", "Pan Left", "Dynamic Orbit", "Zoom In (Dolly)", "Zoom Out", "FPV Drone Dive", "Tilt Up", "Handheld Action")
@@ -757,12 +779,12 @@ fun VideoStudioTab(
                     text = "🎬 Studio Cinema & Video (100% Free AI Models)",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = textPrimaryColor
                 )
                 Text(
                     text = "AnimateDiff XL • CogVideoX • SVD • ModelScope • Nusantara Drone",
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = textSecondaryColor
                 )
             }
         }
@@ -773,7 +795,15 @@ fun VideoStudioTab(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
+                .background(
+                    if (isDark) Color(0xFF182235) else Color(0xFFF1F5F9),
+                    RoundedCornerShape(10.dp)
+                )
+                .border(
+                    width = 1.dp,
+                    color = if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1),
+                    shape = RoundedCornerShape(10.dp)
+                )
                 .padding(4.dp)
         ) {
             listOf(
@@ -786,7 +816,7 @@ fun VideoStudioTab(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) primaryColor else Color.Transparent)
+                        .background(if (isSelected) (if (isDark) Color(0xFF004D66) else Color(0xFF2563EB)) else Color.Transparent)
                         .clickable {
                             videoMode = mode
                             if (mode == "PRESET" && videoPrompt.isBlank()) {
@@ -799,8 +829,8 @@ fun VideoStudioTab(
                     Text(
                         text = label,
                         fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) Color.White else textSecondaryColor
                     )
                 }
             }
@@ -809,7 +839,7 @@ fun VideoStudioTab(
         Spacer(modifier = Modifier.height(12.dp))
 
         // Free Video Models Selector
-        Text(text = "Pilih Model Cinema AI Bebas Biaya (100% Free):", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = "Pilih Model Cinema AI Bebas Biaya (100% Free):", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
         Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = Modifier
@@ -821,13 +851,13 @@ fun VideoStudioTab(
                 val isSelected = selectedVideoModelId == model.id
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = if (isSelected) primaryColor.copy(alpha = if (isDark) 0.25f else 0.15f)
-                            else MaterialTheme.colorScheme.surface,
+                    color = if (isSelected) (if (isDark) Color(0xFF004D66) else Color(0xFFEFF6FF))
+                            else (if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF)),
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
                         .border(
                             width = if (isSelected) 2.dp else 1.dp,
-                            color = if (isSelected) primaryColor else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            color = if (isSelected) primaryColor else (if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)),
                             shape = RoundedCornerShape(12.dp)
                         )
                         .clickable { selectedVideoModelId = model.id }
@@ -843,7 +873,7 @@ fun VideoStudioTab(
                                 text = model.name,
                                 fontSize = 11.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface
+                                color = if (isSelected) primaryColor else textPrimaryColor
                             )
                         }
                     }
@@ -854,7 +884,7 @@ fun VideoStudioTab(
         Spacer(modifier = Modifier.height(12.dp))
 
         // Cinematic Aspect Ratio Selector
-        Text(text = "Rasio Layar Sinema:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = "Rasio Layar Sinema:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textPrimaryColor)
         Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -864,7 +894,11 @@ fun VideoStudioTab(
                 val isSelected = selectedRatio == ratio
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = if (isSelected) primaryColor else MaterialTheme.colorScheme.surfaceVariant,
+                    color = if (isSelected) (if (isDark) Color(0xFF004D66) else Color(0xFF2563EB)) else (if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF)),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isSelected) (if (isDark) ElectricCyan else Color(0xFF0F52BA)) else (if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1))
+                    ),
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
@@ -873,8 +907,8 @@ fun VideoStudioTab(
                     Text(
                         text = ratio,
                         fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) Color.White else textPrimaryColor,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                         modifier = Modifier.padding(vertical = 6.dp)
                     )
@@ -892,14 +926,16 @@ fun VideoStudioTab(
                 Text(
                     if (videoMode == "T2V") "Prompt Adegan Video Sinematik (Text to Video)"
                     else if (videoMode == "I2V") "Instruksi Gerak / Animasi Gambar (Image to Video)"
-                    else "Deskripsi Adegan Sinema Nusantara"
+                    else "Deskripsi Adegan Sinema Nusantara",
+                    color = textSecondaryColor
                 )
             },
             placeholder = {
                 Text(
                     if (videoMode == "T2V") "Contoh: Katak pohon melompat perlahan dari batu berlumut di hutan hujan lebat..."
                     else if (videoMode == "I2V") "Contoh: Animasikan aliran air sungai bergerak alami dan kabut melayang pelan..."
-                    else "Pilih salah satu preset sinema di bawah atau tulis adegan baru..."
+                    else "Pilih salah satu preset sinema di bawah atau tulis adegan baru...",
+                    color = if (isDark) Color(0xFF64748B) else Color(0xFF94A3B8)
                 )
             },
             modifier = Modifier.fillMaxWidth(),
@@ -914,7 +950,7 @@ fun VideoStudioTab(
             text = if (videoMode == "PRESET") "🌟 Pilihan Sinema Budaya & Lanskap:" else "💡 Inspirasi Cepat:",
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = textSecondaryColor
         )
         Spacer(modifier = Modifier.height(4.dp))
         Row(
@@ -926,7 +962,8 @@ fun VideoStudioTab(
             cinemaPresets.forEach { preset ->
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                    color = if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)),
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
                         .clickable { videoPrompt = preset.substringAfter(" ") }
@@ -934,7 +971,7 @@ fun VideoStudioTab(
                     Text(
                         text = preset.take(36) + "...",
                         fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = textPrimaryColor,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
@@ -944,7 +981,7 @@ fun VideoStudioTab(
         Spacer(modifier = Modifier.height(12.dp))
 
         // Camera Motion Presets
-        Text(text = "Gerakan Kamera Neural (Camera Motion):", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = "Gerakan Kamera Neural (Camera Motion):", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = textPrimaryColor)
         Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = Modifier
@@ -956,7 +993,11 @@ fun VideoStudioTab(
                 val isSelected = cameraMotion == motion
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = if (isSelected) primaryColor else MaterialTheme.colorScheme.surfaceVariant,
+                    color = if (isSelected) (if (isDark) Color(0xFF004D66) else Color(0xFF2563EB)) else (if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF)),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isSelected) (if (isDark) ElectricCyan else Color(0xFF0F52BA)) else (if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1))
+                    ),
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
                         .clickable { cameraMotion = motion }
@@ -964,8 +1005,8 @@ fun VideoStudioTab(
                     Text(
                         text = motion,
                         fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) Color.White else textPrimaryColor,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                     )
                 }
@@ -979,8 +1020,8 @@ fun VideoStudioTab(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Durasi: ${videoLengthSec}s", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
-            Text("Framerate: ${fps} FPS (4K Cinema)", fontSize = 12.sp, color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold)
+            Text("Durasi: ${videoLengthSec}s", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = textPrimaryColor)
+            Text("Framerate: ${fps} FPS (4K Cinema)", fontSize = 12.sp, color = if (isDark) EmeraldGreen else Color(0xFF047857), fontWeight = FontWeight.Bold)
         }
         Slider(
             value = videoLengthSec.toFloat(),
@@ -994,7 +1035,12 @@ fun VideoStudioTab(
         Button(
             onClick = { executeVideoRender() },
             enabled = videoPrompt.isNotBlank() && !isRendering,
-            colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isDark) ElectricCyan else Color(0xFF2563EB),
+                contentColor = if (isDark) Color(0xFF003344) else Color.White,
+                disabledContainerColor = if (isDark) Color(0xFF1E293B) else Color(0xFFE2E8F0),
+                disabledContentColor = if (isDark) Color(0xFF64748B) else Color(0xFF475569)
+            ),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {

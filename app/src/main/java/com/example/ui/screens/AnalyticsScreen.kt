@@ -3,6 +3,7 @@ package com.example.ui.screens
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,7 +45,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -73,6 +73,13 @@ fun AnalyticsScreen(
         label = "offline_ratio_anim"
     )
 
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+    val textPrimaryColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+    val textSecondaryColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF334155)
+    val primaryAccent = if (isDark) ElectricCyan else Color(0xFF0F52BA)
+    val emeraldAccent = if (isDark) EmeraldGreen else Color(0xFF047857)
+    val violetAccent = if (isDark) NeonViolet else Color(0xFF6D28D9)
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -87,13 +94,13 @@ fun AnalyticsScreen(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(EmeraldGreen.copy(alpha = 0.15f)),
+                        .background(emeraldAccent.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Insights,
                         contentDescription = null,
-                        tint = EmeraldGreen,
+                        tint = emeraldAccent,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -103,12 +110,12 @@ fun AnalyticsScreen(
                         text = "Dasbor Analitik Personal",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = textPrimaryColor
                     )
                     Text(
                         text = "Pelacakan efisiensi komputasi, privasi, dan penghematan daya",
                         fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = textSecondaryColor
                     )
                 }
             }
@@ -125,7 +132,8 @@ fun AnalyticsScreen(
                     value = "$totalTokens",
                     subtitle = "Diproses aman",
                     icon = Icons.Default.Storage,
-                    tint = ElectricCyan,
+                    tint = primaryAccent,
+                    isDark = isDark,
                     modifier = Modifier.weight(1f)
                 )
                 AnalyticsMetricCard(
@@ -133,7 +141,8 @@ fun AnalyticsScreen(
                     value = "%.0f ms".format(if (avgLatency > 0) avgLatency else 230.0),
                     subtitle = "Responsivitas",
                     icon = Icons.Default.Timer,
-                    tint = EmeraldGreen,
+                    tint = emeraldAccent,
+                    isDark = isDark,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -149,7 +158,8 @@ fun AnalyticsScreen(
                     value = "${(offlineRatio * 100).toInt()}%",
                     subtitle = "$offlineCount/$totalQueries kueri",
                     icon = Icons.Default.Bolt,
-                    tint = NeonViolet,
+                    tint = violetAccent,
+                    isDark = isDark,
                     modifier = Modifier.weight(1f)
                 )
                 AnalyticsMetricCard(
@@ -157,7 +167,8 @@ fun AnalyticsScreen(
                     value = "%.2f mWh".format(energySavedTotal),
                     subtitle = "Eco compute",
                     icon = Icons.Default.Eco,
-                    tint = EmeraldGreen,
+                    tint = emeraldAccent,
+                    isDark = isDark,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -168,8 +179,9 @@ fun AnalyticsScreen(
             Card(
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF)
                 ),
+                border = BorderStroke(1.dp, if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
@@ -177,12 +189,12 @@ fun AnalyticsScreen(
                         text = "Distribusi Kueri",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = textPrimaryColor
                     )
                     Text(
                         text = "Offline (On-Device) vs Online (Cloud)",
                         fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = textSecondaryColor
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -190,8 +202,8 @@ fun AnalyticsScreen(
                     BarChartMini(
                         offlineCount = offlineCount,
                         onlineCount = onlineCount,
-                        offlineColor = EmeraldGreen,
-                        onlineColor = ElectricCyan,
+                        offlineColor = emeraldAccent,
+                        onlineColor = primaryAccent,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(80.dp)
@@ -206,8 +218,8 @@ fun AnalyticsScreen(
                             .fillMaxWidth()
                             .height(8.dp)
                             .clip(RoundedCornerShape(4.dp)),
-                        color = EmeraldGreen,
-                        trackColor = ElectricCyan.copy(alpha = 0.3f),
+                        color = emeraldAccent,
+                        trackColor = primaryAccent.copy(alpha = 0.3f),
                         strokeCap = StrokeCap.Round
                     )
                     Spacer(modifier = Modifier.height(6.dp))
@@ -220,14 +232,14 @@ fun AnalyticsScreen(
                                 modifier = Modifier
                                     .size(8.dp)
                                     .clip(CircleShape)
-                                    .background(EmeraldGreen)
+                                    .background(emeraldAccent)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "$offlineCount On-Device",
-                                fontSize = 11.sp,
-                                color = EmeraldGreen,
-                                fontWeight = FontWeight.SemiBold
+                                text = "Offline $offlineCount (${(offlineRatio * 100).toInt()}%)",
+                                fontSize = 10.sp,
+                                color = emeraldAccent,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -235,14 +247,14 @@ fun AnalyticsScreen(
                                 modifier = Modifier
                                     .size(8.dp)
                                     .clip(CircleShape)
-                                    .background(ElectricCyan)
+                                    .background(primaryAccent)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "$onlineCount Cloud",
-                                fontSize = 11.sp,
-                                color = ElectricCyan,
-                                fontWeight = FontWeight.SemiBold
+                                text = "Online $onlineCount (${((1f - offlineRatio) * 100).toInt()}%)",
+                                fontSize = 10.sp,
+                                color = primaryAccent,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
@@ -250,139 +262,76 @@ fun AnalyticsScreen(
             }
         }
 
-        // ── Kategori Breakdown ────────────────────────────────────────────
-        item {
-            val categories = recentLogs
-                .groupBy { it.category }
-                .mapValues { it.value.size }
-                .entries.sortedByDescending { it.value }
-
-            if (categories.isNotEmpty()) {
-                Card(
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(
-                            text = "Kategori Penggunaan",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        val maxCount = categories.firstOrNull()?.value ?: 1
-                        categories.take(5).forEach { (cat, count) ->
-                            val ratio by animateFloatAsState(
-                                targetValue = count.toFloat() / maxCount,
-                                animationSpec = spring(stiffness = Spring.StiffnessLow),
-                                label = "cat_$cat"
-                            )
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 3.dp)
-                            ) {
-                                Text(
-                                    text = cat,
-                                    fontSize = 11.sp,
-                                    modifier = Modifier.width(72.dp),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                LinearProgressIndicator(
-                                    progress = { ratio },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(6.dp)
-                                        .clip(RoundedCornerShape(50)),
-                                    color = NeonViolet,
-                                    trackColor = NeonViolet.copy(alpha = 0.1f),
-                                    strokeCap = StrokeCap.Round
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "$count",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = NeonViolet,
-                                    modifier = Modifier.width(24.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // ── Riwayat Audit Real-Time ───────────────────────────────────────
+        // ── Riwayat Log Telemetri ─────────────────────────────────────────
         item {
             Text(
-                text = "📋 Riwayat Audit Kueri Real-Time",
+                text = "Riwayat Kueri & Latensi Terakhir",
                 fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = textPrimaryColor,
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
 
-        items(recentLogs) { log ->
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+        if (recentLogs.isEmpty()) {
+            item {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF),
+                    border = BorderStroke(1.dp, if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (log.mode == "OFFLINE") EmeraldGreen else ElectricCyan
-                                )
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
+                    Text(
+                        text = "Belum ada riwayat analitik. Mulai mengobrol untuk mengumpulkan data.",
+                        fontSize = 11.sp,
+                        color = textSecondaryColor,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+            }
+        } else {
+            items(recentLogs.take(10)) { log ->
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF),
+                    border = BorderStroke(1.dp, if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val isLogOffline = log.mode == "OFFLINE"
+                        Column(modifier = Modifier.weight(1f)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = if (log.mode == "OFFLINE") "OFFLINE" else "ONLINE",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (log.mode == "OFFLINE") EmeraldGreen else ElectricCyan
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isLogOffline) emeraldAccent else primaryAccent)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = log.category,
+                                    text = log.modelName,
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    fontWeight = FontWeight.Bold,
+                                    color = textPrimaryColor
                                 )
                             }
                             Text(
-                                text = log.modelName,
-                                fontSize = 10.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = "Token: ${log.tokenCount} • Penghematan daya aktif",
+                                fontSize = 9.sp,
+                                color = textSecondaryColor
                             )
                         }
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "${log.tokenCount} tok",
-                            fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
                         Text(
                             text = "${log.latencyMs}ms",
-                            fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isLogOffline) emeraldAccent else primaryAccent
                         )
                     }
                 }
@@ -393,9 +342,6 @@ fun AnalyticsScreen(
     }
 }
 
-/**
- * Mini bar chart sederhana berbasis Canvas untuk visualisasi Offline vs Online.
- */
 @Composable
 private fun BarChartMini(
     offlineCount: Int,
@@ -450,11 +396,13 @@ fun AnalyticsMetricCard(
     subtitle: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     tint: Color,
+    isDark: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF)),
+        border = BorderStroke(1.dp, if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)),
         modifier = modifier
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
@@ -466,7 +414,8 @@ fun AnalyticsMetricCard(
                 Text(
                     text = title,
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontWeight = FontWeight.Medium,
+                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF334155)
                 )
                 Icon(
                     imageVector = icon,
@@ -485,7 +434,7 @@ fun AnalyticsMetricCard(
             Text(
                 text = subtitle,
                 fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
             )
         }
     }
