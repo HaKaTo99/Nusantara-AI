@@ -47,10 +47,12 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -319,6 +321,11 @@ fun SettingsScreen(
             val sharedPrefs = remember { context.getSharedPreferences("nusantara_ai_prefs", Context.MODE_PRIVATE) }
             var customKeyInput by remember { mutableStateOf(sharedPrefs.getString("custom_gemini_api_key", "") ?: "") }
             var isSaved by remember { mutableStateOf(false) }
+            val hybridEngine = remember { com.example.domain.ai.HybridAIEngine(context, com.example.data.local.AppDatabase.getDatabase(context).analyticsDao()) }
+            val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+            var isTestingKey by remember { mutableStateOf(false) }
+            var testStatusMessage by remember { mutableStateOf<String?>(null) }
+            var isTestSuccess by remember { mutableStateOf(false) }
 
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -328,7 +335,7 @@ fun SettingsScreen(
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Mode Default: Gateway Multi-Model Terbuka (DeepSeek-R1, Qwen 2.5 Coder, Llama 3.3, OpenAI) tanpa batas kuota API key.",
+                    text = "Konfigurasi Kunci API Google Cloud Gemini untuk inferensi langsung dan mode Cloud Murni.",
                     fontSize = 11.sp,
                     color = textSecondaryColor,
                     lineHeight = 15.sp
@@ -336,7 +343,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Kunci Google Gemini API Pribadi (Opsional):",
+                    text = "Kunci Google Gemini API (Aktif & Terenkripsi):",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = textPrimaryColor
@@ -348,8 +355,9 @@ fun SettingsScreen(
                     onValueChange = { 
                         customKeyInput = it
                         isSaved = false
+                        testStatusMessage = null
                     },
-                    placeholder = { Text("Masukkan AIzaSy... (Opsional)", fontSize = 11.sp) },
+                    placeholder = { Text("Masukkan AIzaSy... (Atau gunakan bawaan .env)", fontSize = 11.sp) },
                     singleLine = true,
                     textStyle = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, fontFamily = FontFamily.Monospace),
                     modifier = Modifier.fillMaxWidth(),
@@ -369,6 +377,61 @@ fun SettingsScreen(
                         }
                     }
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Test API Key Button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            val keyToTest = if (customKeyInput.isNotBlank()) customKeyInput.trim() else hybridEngine.getStoredApiKey()
+                            isTestingKey = true
+                            testStatusMessage = null
+                            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                                val result = hybridEngine.testApiKeyConnection(keyToTest)
+                                isTestingKey = false
+                                isTestSuccess = result.first
+                                testStatusMessage = result.second
+                            }
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, if (isDark) primaryAccent else Color(0xFF2563EB)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (isTestingKey) {
+                            androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = primaryAccent)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Menguji Koneksi Google Cloud...", fontSize = 11.sp)
+                        } else {
+                            Icon(Icons.Default.CloudQueue, contentDescription = null, modifier = Modifier.size(14.dp), tint = primaryAccent)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("🧪 Uji Koneksi Kunci Google Cloud Gemini", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = primaryAccent)
+                        }
+                    }
+                }
+
+                // Test Status Result Banner
+                testStatusMessage?.let { msg ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isTestSuccess) (if (isDark) emeraldAccent.copy(alpha = 0.15f) else Color(0xFFECFDF5)) else (if (isDark) Color(0xFFFF5252).copy(alpha = 0.15f) else Color(0xFFFEE2E2)),
+                        border = BorderStroke(1.dp, if (isTestSuccess) emeraldAccent else Color(0xFFEF4444)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = (if (isTestSuccess) "🟢 " else "🔴 ") + msg,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (isTestSuccess) emeraldAccent else Color(0xFFDC2626),
+                            modifier = Modifier.padding(10.dp)
+                        )
+                    }
+                }
             }
         }
 

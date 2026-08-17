@@ -306,6 +306,44 @@ fun ModelSelectorDialog(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Mode Dynamic Description Card
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = when (selectedMode) {
+                            "HYBRID" -> if (isDark) primaryAccent.copy(alpha = 0.12f) else Color(0xFFEFF6FF)
+                            "ONLINE" -> if (isDark) violetAccent.copy(alpha = 0.12f) else Color(0xFFF5F3FF)
+                            else -> if (isDark) emeraldAccent.copy(alpha = 0.12f) else Color(0xFFECFDF5)
+                        },
+                        border = BorderStroke(
+                            1.dp,
+                            when (selectedMode) {
+                                "HYBRID" -> primaryAccent.copy(alpha = 0.4f)
+                                "ONLINE" -> violetAccent.copy(alpha = 0.4f)
+                                else -> emeraldAccent.copy(alpha = 0.4f)
+                            }
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            when (selectedMode) {
+                                "HYBRID" -> {
+                                    Text("🔄 Mode Hibrida Otomatis", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = primaryAccent)
+                                    Text("Memprioritaskan Cloud AI saat online, dan otomatis beralih (failover) ke On-Device lokal saat offline.", fontSize = 10.sp, color = textSecondaryColor, lineHeight = 14.sp)
+                                }
+                                "ONLINE" -> {
+                                    Text("☁️ Mode Cloud Saja", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = violetAccent)
+                                    Text("100% inferensi via Google Cloud Gemini API. Memerlukan koneksi internet & Kunci API aktif.", fontSize = 10.sp, color = textSecondaryColor, lineHeight = 14.sp)
+                                }
+                                "OFFLINE" -> {
+                                    Text("🛡️ Mode Offline Lokal", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = emeraldAccent)
+                                    Text("100% komputasi on-device di HP menggunakan bobot model yang sudah diunduh/terpasang. Bebas kuota & tanpa internet.", fontSize = 10.sp, color = textSecondaryColor, lineHeight = 14.sp)
+                                }
+                            }
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(14.dp))
                     Text(
                         text = "Daftar Model AI Terintegrasi:",

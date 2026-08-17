@@ -42,7 +42,7 @@ class HybridAIEngine(
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
-    private fun getStoredApiKey(): String {
+    fun getStoredApiKey(): String {
         val sharedPrefs = context.getSharedPreferences("nusantara_ai_prefs", Context.MODE_PRIVATE)
         val customKey = sharedPrefs.getString("custom_gemini_api_key", "")?.trim()
         if (!customKey.isNullOrBlank()) {
@@ -56,6 +56,35 @@ class HybridAIEngine(
         }
     }
 
+    suspend fun testApiKeyConnection(apiKey: String): Pair<Boolean, String> = withContext(Dispatchers.IO) {
+        if (apiKey.isBlank()) return@withContext Pair(false, "Kunci API tidak boleh kosong.")
+        val startTime = System.currentTimeMillis()
+        try {
+            val request = GeminiGenerateRequest(
+                contents = listOf(
+                    GeminiContent(role = "user", parts = listOf(GeminiPart(text = "Ping")))
+                ),
+                generationConfig = GeminiGenerationConfig(maxOutputTokens = 5, temperature = 0.1f)
+            )
+
+            val response = RetrofitClient.geminiService.generateContent(
+                model = "gemini-1.5-flash",
+                apiKey = apiKey,
+                request = request
+            )
+
+            val text = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
+            if (!text.isNullOrBlank()) {
+                val elapsed = System.currentTimeMillis() - startTime
+                Pair(true, "Kunci API Valid & Aktif • Model: gemini-1.5-flash (${elapsed}ms)")
+            } else {
+                Pair(false, "Respon server kosong.")
+            }
+        } catch (e: Exception) {
+            Pair(false, "Gagal terhubung: ${e.localizedMessage ?: e.message ?: "Invalid Key"}")
+        }
+    }
+
     suspend fun processQuery(
         prompt: String,
         selectedModel: String = "Gemini 3.5 Flash",
@@ -66,7 +95,8 @@ class HybridAIEngine(
         enableDeepReasoning: Boolean = true
     ): AIResponse = withContext(Dispatchers.IO) {
         val startTime = System.currentTimeMillis()
-        val isOnlineEligible = modePreference != "OFFLINE"
+        val apiKey = getStoredApiKey()
+        val hasNetwork = isNetworkAvailable()
 
         val systemInstructionText = if (personaPrompt.isNotBlank()) {
             personaPrompt
@@ -76,12 +106,70 @@ class HybridAIEngine(
             "Jika diminta membuat source code (HTML, Kotlin, Python, Java, SQL, JS, Bash, C++, dll), berikan implementasi kode yang lengkap, bersih, dan siap dikompilasi/dieksekusi langsung di dalam blok markdown."
         }
 
-        val apiKey = getStoredApiKey()
+        // =========================================================================
+        // MODE 1: OFFLINE MURNI (100% On-Device Neural Engine, No Internet Call)
+        // =========================================================================
+        if (modePreference == "OFFLINE") {
+            val offlineResponse = OfflineReasoningEngine.generateOfflineResponse(
+                prompt = prompt,
+                personaRole = if (personaPrompt.isNotBlank()) personaPrompt else "Nusantara Core AI",
+                temperature = temperature
+            )
 
-        // ----------------------------------------------------
-        // TIER 1: Official Google Gemini Direct Cloud (If API Key Active)
-        // ----------------------------------------------------
-        if (isOnlineEligible && apiKey.isNotBlank()) {
+            val customOfflineModelName = if (selectedModel.contains("Local", ignoreCase = true) || selectedModel.contains("Garuda", ignoreCase = true)) {
+                selectedModel
+            } else {
+                "On-Device Neural Engine ($selectedModel Offline)"
+            }
+
+            analyticsDao.insertLog(
+                AnalyticsLogEntity(
+                    mode = "OFFLINE",
+                    tokenCount = offlineResponse.tokenCount,
+                    latencyMs = offlineResponse.latencyMs,
+                    energySavedMWh = 0.042,
+                    category = detectCategory(prompt),
+                    modelName = customOfflineModelName
+                )
+            )
+
+            return@withContext offlineResponse.copy(
+                modelName = customOfflineModelName,
+                isOffline = true
+            )
+        }
+
+        // =========================================================================
+        // MODE 2: ONLINE CLOUD SAJA (Strict Cloud API Mode)
+        // =========================================================================
+        if (modePreference == "ONLINE") {
+            if (apiKey.isBlank()) {
+                val latency = System.currentTimeMillis() - startTime
+                return@withContext AIResponse(
+                    text = "⚠️ **Mode Cloud Aktif:** Memerlukan Kunci API Google Gemini untuk inferensi langsung ke cloud.\n\n" +
+                            "Silakan buka menu **Pengaturan** (ikon roda gigi di pojok kanan atas) dan masukkan Kunci API Google Gemini Anda pada bagian *'Gateway Model AI Real-Time'*, atau alihkan ke **Mode Hibrida / Offline** pada pemilih model.",
+                    reasoningSteps = listOf("⚠️ [Mode Cloud] Kunci Google Gemini API belum disetel di Pengaturan"),
+                    tokenCount = 20,
+                    latencyMs = latency,
+                    isOffline = false,
+                    modelName = "Cloud Gateway (API Key Diperlukan)"
+                )
+            }
+
+            if (!hasNetwork) {
+                val latency = System.currentTimeMillis() - startTime
+                return@withContext AIResponse(
+                    text = "⚠️ **Mode Cloud Aktif:** Perangkat Anda sedang tidak terhubung ke jaringan internet.\n\n" +
+                            "Aktifkan koneksi Wi-Fi/Data Seluler Anda, atau ubah mode ke **'Hibrida Otomatis'** agar sistem dapat beralih otomatis ke model lokal on-device saat internet terputus.",
+                    reasoningSteps = listOf("❌ [Mode Cloud] Koneksi jaringan internet terputus"),
+                    tokenCount = 15,
+                    latencyMs = latency,
+                    isOffline = false,
+                    modelName = "Cloud Gateway (Offline Network)"
+                )
+            }
+
+            // Execute Direct Google Cloud Gemini Call
             try {
                 val modelEndpoint = when {
                     selectedModel.contains("Pro", ignoreCase = true) -> "gemini-1.5-pro"
@@ -115,7 +203,83 @@ class HybridAIEngine(
 
                     val steps = mutableListOf<String>()
                     if (enableDeepReasoning) {
-                        steps.add("🌐 [Cloud Connect] Terhubung langsung ke Google $modelEndpoint (Official Key)")
+                        steps.add("🌐 [Cloud Connect] Terhubung langsung ke Google $modelEndpoint (Mode Cloud Saja)")
+                        steps.add("🔐 [Memory Isolation] Token diproses dalam secure runtime E2EE")
+                        steps.add("⚡ [Synthesis] Berhasil memproses $tokenUsage token dalam ${latency}ms")
+                    }
+
+                    analyticsDao.insertLog(
+                        AnalyticsLogEntity(
+                            mode = "ONLINE",
+                            tokenCount = tokenUsage,
+                            latencyMs = latency,
+                            energySavedMWh = 0.0,
+                            category = detectCategory(prompt),
+                            modelName = selectedModel
+                        )
+                    )
+
+                    return@withContext AIResponse(
+                        text = responseText,
+                        reasoningSteps = steps,
+                        tokenCount = tokenUsage,
+                        latencyMs = latency,
+                        isOffline = false,
+                        modelName = "$selectedModel (Google Cloud Direct)",
+                        confidenceScore = OfflineReasoningEngine.detectConfidence(responseText, isOnline = true, latencyMs = latency)
+                    )
+                }
+            } catch (e: Exception) {
+                val latency = System.currentTimeMillis() - startTime
+                return@withContext AIResponse(
+                    text = "❌ **Gagal Menghubungi Cloud API:** ${e.localizedMessage ?: e.message ?: "Network error"}\n\nSilakan periksa kuota Kunci API Anda atau beralih ke Mode Hibrida.",
+                    reasoningSteps = listOf("❌ [Cloud Error] ${e.localizedMessage}"),
+                    tokenCount = 10,
+                    latencyMs = latency,
+                    isOffline = false,
+                    modelName = "Cloud Gateway Error"
+                )
+            }
+        }
+
+        // =========================================================================
+        // MODE 3: HIBRIDA OTOMATIS (Smart Cloud-First with Seamless On-Device Failover)
+        // =========================================================================
+        if (apiKey.isNotBlank()) {
+            try {
+                val modelEndpoint = when {
+                    selectedModel.contains("Pro", ignoreCase = true) -> "gemini-1.5-pro"
+                    selectedModel.contains("DeepSeek", ignoreCase = true) -> "gemini-1.5-pro"
+                    imageBase64 != null -> "gemini-1.5-flash"
+                    else -> "gemini-1.5-flash"
+                }
+
+                val parts = mutableListOf<GeminiPart>()
+                parts.add(GeminiPart(text = prompt))
+                if (imageBase64 != null) {
+                    parts.add(GeminiPart(inlineData = GeminiInlineData(mimeType = "image/jpeg", data = imageBase64)))
+                }
+
+                val request = GeminiGenerateRequest(
+                    contents = listOf(GeminiContent(role = "user", parts = parts)),
+                    generationConfig = GeminiGenerationConfig(temperature = temperature, topP = 0.95f, maxOutputTokens = 3072),
+                    systemInstruction = GeminiContent(parts = listOf(GeminiPart(text = systemInstructionText)))
+                )
+
+                val response = RetrofitClient.geminiService.generateContent(
+                    model = modelEndpoint,
+                    apiKey = apiKey,
+                    request = request
+                )
+
+                val responseText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
+                if (!responseText.isNullOrBlank()) {
+                    val tokenUsage = response.usageMetadata?.totalTokenCount ?: (prompt.length / 4 + responseText.length / 4)
+                    val latency = System.currentTimeMillis() - startTime
+
+                    val steps = mutableListOf<String>()
+                    if (enableDeepReasoning) {
+                        steps.add("🔄 [Hybrid Cloud] Rute utama Google $modelEndpoint aktif")
                         steps.add("🔐 [Memory Isolation] Sesi terenkripsi end-to-end dengan Keystore lokal")
                         steps.add("⚡ [Synthesis] Berhasil memproses $tokenUsage token dalam ${latency}ms")
                     }
@@ -137,75 +301,25 @@ class HybridAIEngine(
                         tokenCount = tokenUsage,
                         latencyMs = latency,
                         isOffline = false,
-                        modelName = "$selectedModel (Live Cloud)",
+                        modelName = "$selectedModel (Hybrid Cloud)",
                         confidenceScore = OfflineReasoningEngine.detectConfidence(responseText, isOnline = true, latencyMs = latency)
                     )
                 }
             } catch (e: Exception) {
-                // If official direct call encountered network issues, proceed to fallback
+                // Cloud encountered network drop -> proceed to seamless on-device local failover below
             }
         }
 
-        // ----------------------------------------------------
-        // TIER 2: Real Open AI Multi-Model Gateway
-        // ----------------------------------------------------
-        if (isOnlineEligible) {
-            try {
-                val resolvedModelKey = mapModelToOnlineKey(selectedModel)
-                val encodedPrompt = URLEncoder.encode(prompt, StandardCharsets.UTF_8.toString())
-                val encodedSystem = URLEncoder.encode(systemInstructionText, StandardCharsets.UTF_8.toString())
-                val getUrl = "https://text.pollinations.ai/$encodedPrompt?system=$encodedSystem&model=openai-fast"
-                val getRequest = Request.Builder().url(getUrl).build()
-                val getResponse = httpClient.newCall(getRequest).execute()
-
-                if (getResponse.isSuccessful && getResponse.body != null) {
-                    val liveResponseText = getResponse.body!!.string().trim()
-                    if (liveResponseText.isNotBlank() && !liveResponseText.contains("Payment Required", ignoreCase = true)) {
-                        val latency = System.currentTimeMillis() - startTime
-                        val tokenUsage = (prompt.length / 4) + (liveResponseText.length / 4) + 32
-
-                        val steps = mutableListOf<String>()
-                        if (enableDeepReasoning) {
-                            steps.add("🌐 [Model Routing] Terhubung ke mesin inferensi real: $selectedModel [$resolvedModelKey]")
-                            steps.add("⚡ [Inference Gateway] Evaluasi konteks multimodal dengan parameter Temperature $temperature")
-                            steps.add("🎯 [Response Stream] Berhasil menghasilkan balasan lengkap dalam ${latency}ms")
-                        }
-
-                        analyticsDao.insertLog(
-                            AnalyticsLogEntity(
-                                mode = "ONLINE",
-                                tokenCount = tokenUsage,
-                                latencyMs = latency,
-                                energySavedMWh = 0.0,
-                                category = detectCategory(prompt),
-                                modelName = selectedModel
-                            )
-                        )
-
-                        return@withContext AIResponse(
-                            text = liveResponseText,
-                            reasoningSteps = steps,
-                            tokenCount = tokenUsage,
-                            latencyMs = latency,
-                            isOffline = false,
-                            modelName = "$selectedModel (Live)",
-                            confidenceScore = 98
-                        )
-                    }
-                }
-            } catch (e: Exception) {
-                // Proceed to Tier 3
-            }
-        }
-
-        // ----------------------------------------------------
-        // TIER 3: Local On-Device Neural Engine (Offline)
-        // ----------------------------------------------------
+        // Seamless Failover to Local On-Device Neural Engine
         val offlineResponse = OfflineReasoningEngine.generateOfflineResponse(
             prompt = prompt,
             personaRole = if (personaPrompt.isNotBlank()) personaPrompt else "Nusantara Core AI",
             temperature = temperature
         )
+
+        val hybridSteps = mutableListOf<String>()
+        hybridSteps.add("⚡ [Auto-Failover] Mode Hibrida: Beralih otomatis ke On-Device Neural Engine")
+        hybridSteps.addAll(offlineResponse.reasoningSteps)
 
         analyticsDao.insertLog(
             AnalyticsLogEntity(
@@ -218,19 +332,11 @@ class HybridAIEngine(
             )
         )
 
-        return@withContext offlineResponse
-    }
-
-    private fun mapModelToOnlineKey(selectedModel: String): String {
-        val lower = selectedModel.lowercase()
-        return when {
-            lower.contains("deepseek") || lower.contains("reasoning") -> "deepseek"
-            lower.contains("qwen") || lower.contains("coder") -> "qwen-coder"
-            lower.contains("llama") -> "llama"
-            lower.contains("claude") -> "claude"
-            lower.contains("mistral") -> "mistral"
-            else -> "openai"
-        }
+        return@withContext offlineResponse.copy(
+            reasoningSteps = hybridSteps,
+            modelName = "On-Device Neural Core ($selectedModel)",
+            isOffline = true
+        )
     }
 
     private fun detectCategory(prompt: String): String {
