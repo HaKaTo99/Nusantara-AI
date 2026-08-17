@@ -1,5 +1,6 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +20,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Thermostat
-import androidx.compose.material.icons.filled.Thunderstorm
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,7 +35,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -42,19 +42,31 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.domain.ai.telemetry.NPUTelemetrySnapshot
+import com.example.ui.theme.ElectricCyan
+import com.example.ui.theme.EmeraldGreen
+import com.example.ui.theme.NeonViolet
 
 @Composable
 fun DiagnosticsDialog(
     telemetry: NPUTelemetrySnapshot,
     onDismiss: () -> Unit
 ) {
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+    val textPrimaryColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+    val textSecondaryColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF334155)
+    val primaryAccent = if (isDark) ElectricCyan else Color(0xFF0F52BA)
+    val emeraldAccent = if (isDark) EmeraldGreen else Color(0xFF047857)
+    val cardBg = if (isDark) Color(0xFF0A0F1D) else Color(0xFFFFFFFF)
+    val cardBorder = if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)
+    val chipBg = if (isDark) Color(0xFF131D31) else Color(0xFFF1F5F9)
+
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, Brush.horizontalGradient(listOf(Color(0xFF00F2FE), Color(0xFF4FACFE))), RoundedCornerShape(24.dp)),
+                .border(1.dp, cardBorder, RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF0A0F1D))
+            colors = CardDefaults.cardColors(containerColor = cardBg)
         ) {
             Column(
                 modifier = Modifier
@@ -72,13 +84,13 @@ fun DiagnosticsDialog(
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF00F2FE).copy(alpha = 0.15f)),
+                                .background(primaryAccent.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Speed,
                                 contentDescription = "Diagnostik NPU",
-                                tint = Color(0xFF00F2FE),
+                                tint = primaryAccent,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -88,12 +100,12 @@ fun DiagnosticsDialog(
                                 text = "Diagnostik NPU & Telemetri",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = textPrimaryColor
                             )
                             Text(
                                 text = "Native llama.cpp • Fase 3 Live",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF00F2FE)
+                                color = primaryAccent
                             )
                         }
                     }
@@ -102,7 +114,7 @@ fun DiagnosticsDialog(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Tutup",
-                            tint = Color.Gray
+                            tint = textSecondaryColor
                         )
                     }
                 }
@@ -112,7 +124,8 @@ fun DiagnosticsDialog(
                 // Accelerator Chip
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFF131D31),
+                    color = chipBg,
+                    border = BorderStroke(1.dp, cardBorder),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -122,7 +135,7 @@ fun DiagnosticsDialog(
                         Icon(
                             imageVector = Icons.Default.Memory,
                             contentDescription = null,
-                            tint = Color(0xFF00FFA3),
+                            tint = emeraldAccent,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
@@ -130,13 +143,13 @@ fun DiagnosticsDialog(
                             Text(
                                 text = "Akselerator Hardware Aktif",
                                 fontSize = 11.sp,
-                                color = Color.Gray
+                                color = textSecondaryColor
                             )
                             Text(
                                 text = telemetry.activeAccelerator,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color.White
+                                color = textPrimaryColor
                             )
                         }
                     }
@@ -152,7 +165,10 @@ fun DiagnosticsDialog(
                         title = "Throughput AI",
                         value = "%.1f".format(telemetry.tokensPerSecond),
                         unit = "token/detik",
-                        accentColor = Color(0xFF00F2FE)
+                        accentColor = primaryAccent,
+                        chipBg = chipBg,
+                        cardBorder = cardBorder,
+                        textSecondaryColor = textSecondaryColor
                     )
 
                     // TTFT Card
@@ -161,7 +177,10 @@ fun DiagnosticsDialog(
                         title = "Latency (TTFT)",
                         value = "${telemetry.timeToFirstTokenMs}",
                         unit = "milidetik (ms)",
-                        accentColor = Color(0xFFFFAA00)
+                        accentColor = Color(0xFFD97706),
+                        chipBg = chipBg,
+                        cardBorder = cardBorder,
+                        textSecondaryColor = textSecondaryColor
                     )
                 }
 
@@ -174,7 +193,10 @@ fun DiagnosticsDialog(
                         title = "Alokasi RAM (RSS)",
                         value = "${telemetry.ramRssFootprintMB}",
                         unit = "MB (use_mmap)",
-                        accentColor = Color(0xFF9D4EDD)
+                        accentColor = if (isDark) NeonViolet else Color(0xFF7E22CE),
+                        chipBg = chipBg,
+                        cardBorder = cardBorder,
+                        textSecondaryColor = textSecondaryColor
                     )
 
                     // Eco Compute Card
@@ -183,7 +205,10 @@ fun DiagnosticsDialog(
                         title = "Eco-Compute",
                         value = "%.2f".format(telemetry.totalOfflineEnergySavedMWh),
                         unit = "mWh Hemat",
-                        accentColor = Color(0xFF00FFA3)
+                        accentColor = emeraldAccent,
+                        chipBg = chipBg,
+                        cardBorder = cardBorder,
+                        textSecondaryColor = textSecondaryColor
                     )
                 }
 
@@ -192,7 +217,8 @@ fun DiagnosticsDialog(
                 // Thermal Status Bar
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFF131D31),
+                    color = chipBg,
+                    border = BorderStroke(1.dp, cardBorder),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
@@ -205,7 +231,7 @@ fun DiagnosticsDialog(
                                 Icon(
                                     imageVector = Icons.Default.Thermostat,
                                     contentDescription = null,
-                                    tint = if (telemetry.isThrottlingActive) Color.Red else Color(0xFF00FFA3),
+                                    tint = if (telemetry.isThrottlingActive) Color.Red else emeraldAccent,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
@@ -213,7 +239,7 @@ fun DiagnosticsDialog(
                                     text = "Suhu Baterai: %.1f°C".format(telemetry.batteryTemperatureC),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = Color.White
+                                    color = textPrimaryColor
                                 )
                             }
 
@@ -221,7 +247,7 @@ fun DiagnosticsDialog(
                                 text = telemetry.thermalStatus,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (telemetry.isThrottlingActive) Color.Red else Color(0xFF00FFA3)
+                                color = if (telemetry.isThrottlingActive) Color.Red else emeraldAccent
                             )
                         }
 
@@ -233,8 +259,8 @@ fun DiagnosticsDialog(
                                 .fillMaxWidth()
                                 .height(6.dp)
                                 .clip(RoundedCornerShape(3.dp)),
-                            color = if (telemetry.isThrottlingActive) Color.Red else Color(0xFF00FFA3),
-                            trackColor = Color.DarkGray.copy(alpha = 0.5f)
+                            color = if (telemetry.isThrottlingActive) Color.Red else emeraldAccent,
+                            trackColor = if (isDark) Color.DarkGray.copy(alpha = 0.5f) else Color(0xFFE2E8F0)
                         )
                     }
                 }
@@ -242,11 +268,14 @@ fun DiagnosticsDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Close Button
-                OutlinedButton(
+                Button(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF00F2FE))
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isDark) ElectricCyan else Color(0xFF2563EB),
+                        contentColor = if (isDark) Color(0xFF003344) else Color.White
+                    )
                 ) {
                     Text("Tutup Diagnostik", fontWeight = FontWeight.SemiBold)
                 }
@@ -261,18 +290,22 @@ private fun MetricCard(
     title: String,
     value: String,
     unit: String,
-    accentColor: Color
+    accentColor: Color,
+    chipBg: Color,
+    cardBorder: Color,
+    textSecondaryColor: Color
 ) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(14.dp),
-        color = Color(0xFF131D31)
+        color = chipBg,
+        border = BorderStroke(1.dp, cardBorder)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 text = title,
                 fontSize = 11.sp,
-                color = Color.Gray
+                color = textSecondaryColor
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -285,7 +318,7 @@ private fun MetricCard(
             Text(
                 text = unit,
                 fontSize = 10.sp,
-                color = Color.LightGray.copy(alpha = 0.8f)
+                color = textSecondaryColor
             )
         }
     }

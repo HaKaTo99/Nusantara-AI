@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -84,12 +85,19 @@ fun SettingsScreen(
     val encManager = remember { EncryptionManager.getInstance(context) }
     val vaultStatus = remember { encManager.getVaultStatus() }
     val masterKeyHex = remember {
-        // Tampilkan fingerprint aman (bukan kunci asli)
         "AndroidKeyStore :: NusantaraVaultKey_E2EE_2026"
     }
 
-    Column(
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+    val textPrimaryColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+    val textSecondaryColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF334155)
+    val primaryAccent = if (isDark) ElectricCyan else Color(0xFF0F52BA)
+    val emeraldAccent = if (isDark) EmeraldGreen else Color(0xFF047857)
+    val violetAccent = if (isDark) NeonViolet else Color(0xFF6D28D9)
+    val cardBg = if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF)
+    val cardBorder = if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)
 
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
@@ -101,12 +109,12 @@ fun SettingsScreen(
             text = "⚙️ Pengaturan & Keamanan Vault",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = textPrimaryColor
         )
         Text(
             text = "Kustomisasi platform AI, enkripsi end-to-end, dan privasi penuh",
             fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = textSecondaryColor
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -114,7 +122,8 @@ fun SettingsScreen(
         // Section 0: Tampilan & Tema (Dark / Light / System)
         Card(
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            colors = CardDefaults.cardColors(containerColor = cardBg),
+            border = BorderStroke(1.dp, cardBorder),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
@@ -126,17 +135,17 @@ fun SettingsScreen(
                             else -> Icons.Default.BrightnessAuto
                         },
                         contentDescription = null,
-                        tint = ElectricCyan
+                        tint = primaryAccent
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Tampilan & Tema Aplikasi", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Tampilan & Tema Aplikasi", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textPrimaryColor)
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "Pilih skema tema visual sesuai preferensi dan kenyamanan mata Anda:",
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = textSecondaryColor
                 )
                 Spacer(modifier = Modifier.height(10.dp))
 
@@ -148,14 +157,22 @@ fun SettingsScreen(
                     FilterChip(
                         selected = currentTheme == "DARK",
                         onClick = { onThemeChange("DARK") },
-                        label = { Text("🌙 Gelap", fontSize = 11.sp, fontWeight = if (currentTheme == "DARK") FontWeight.Bold else FontWeight.Normal) },
+                        label = { Text("🌙 Gelap", fontSize = 11.sp, fontWeight = if (currentTheme == "DARK") FontWeight.Bold else FontWeight.Medium) },
                         leadingIcon = {
                             Icon(Icons.Default.DarkMode, contentDescription = null, modifier = Modifier.size(14.dp))
                         },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = ElectricCyan.copy(alpha = 0.2f),
-                            selectedLabelColor = ElectricCyan,
-                            selectedLeadingIconColor = ElectricCyan
+                            selectedContainerColor = if (isDark) ElectricCyan.copy(alpha = 0.2f) else Color(0xFFEFF6FF),
+                            selectedLabelColor = primaryAccent,
+                            selectedLeadingIconColor = primaryAccent,
+                            containerColor = cardBg,
+                            labelColor = textSecondaryColor,
+                            iconColor = textSecondaryColor
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = currentTheme == "DARK",
+                            borderColor = if (currentTheme == "DARK") primaryAccent else cardBorder
                         ),
                         modifier = Modifier.weight(1f)
                     )
@@ -164,14 +181,22 @@ fun SettingsScreen(
                     FilterChip(
                         selected = currentTheme == "LIGHT",
                         onClick = { onThemeChange("LIGHT") },
-                        label = { Text("☀️ Terang", fontSize = 11.sp, fontWeight = if (currentTheme == "LIGHT") FontWeight.Bold else FontWeight.Normal) },
+                        label = { Text("☀️ Terang", fontSize = 11.sp, fontWeight = if (currentTheme == "LIGHT") FontWeight.Bold else FontWeight.Medium) },
                         leadingIcon = {
                             Icon(Icons.Default.LightMode, contentDescription = null, modifier = Modifier.size(14.dp))
                         },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = ElectricCyan.copy(alpha = 0.2f),
-                            selectedLabelColor = ElectricCyan,
-                            selectedLeadingIconColor = ElectricCyan
+                            selectedContainerColor = if (isDark) ElectricCyan.copy(alpha = 0.2f) else Color(0xFFEFF6FF),
+                            selectedLabelColor = primaryAccent,
+                            selectedLeadingIconColor = primaryAccent,
+                            containerColor = cardBg,
+                            labelColor = textSecondaryColor,
+                            iconColor = textSecondaryColor
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = currentTheme == "LIGHT",
+                            borderColor = if (currentTheme == "LIGHT") primaryAccent else cardBorder
                         ),
                         modifier = Modifier.weight(1f)
                     )
@@ -180,14 +205,22 @@ fun SettingsScreen(
                     FilterChip(
                         selected = currentTheme == "SYSTEM",
                         onClick = { onThemeChange("SYSTEM") },
-                        label = { Text("📱 Sistem", fontSize = 11.sp, fontWeight = if (currentTheme == "SYSTEM") FontWeight.Bold else FontWeight.Normal) },
+                        label = { Text("📱 Sistem", fontSize = 11.sp, fontWeight = if (currentTheme == "SYSTEM") FontWeight.Bold else FontWeight.Medium) },
                         leadingIcon = {
                             Icon(Icons.Default.BrightnessAuto, contentDescription = null, modifier = Modifier.size(14.dp))
                         },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = ElectricCyan.copy(alpha = 0.2f),
-                            selectedLabelColor = ElectricCyan,
-                            selectedLeadingIconColor = ElectricCyan
+                            selectedContainerColor = if (isDark) ElectricCyan.copy(alpha = 0.2f) else Color(0xFFEFF6FF),
+                            selectedLabelColor = primaryAccent,
+                            selectedLeadingIconColor = primaryAccent,
+                            containerColor = cardBg,
+                            labelColor = textSecondaryColor,
+                            iconColor = textSecondaryColor
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = currentTheme == "SYSTEM",
+                            borderColor = if (currentTheme == "SYSTEM") primaryAccent else cardBorder
                         ),
                         modifier = Modifier.weight(1f)
                     )
@@ -200,33 +233,35 @@ fun SettingsScreen(
         // Section 1: E2EE Vault
         Card(
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            colors = CardDefaults.cardColors(containerColor = cardBg),
+            border = BorderStroke(1.dp, cardBorder),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Lock, contentDescription = null, tint = EmeraldGreen)
+                    Icon(Icons.Default.Lock, contentDescription = null, tint = emeraldAccent)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Enkripsi End-to-End (E2EE Vault)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Enkripsi End-to-End (E2EE Vault)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textPrimaryColor)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Kunci Master AES-256-GCM Perangkat:",
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = textSecondaryColor
                 )
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFF0F172A),
+                    color = if (isDark) Color(0xFF0F172A) else Color(0xFFF1F5F9),
+                    border = BorderStroke(1.dp, if (isDark) Color(0xFF334155) else Color(0xFFCBD5E1)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -234,7 +269,8 @@ fun SettingsScreen(
                             text = "${masterKeyHex.take(24)}... (Keystore Protected)",
                             fontFamily = FontFamily.Monospace,
                             fontSize = 10.sp,
-                            color = ElectricCyan
+                            fontWeight = FontWeight.SemiBold,
+                            color = primaryAccent
                         )
                         IconButton(
                             onClick = {
@@ -245,7 +281,7 @@ fun SettingsScreen(
                             },
                             modifier = Modifier.size(24.dp)
                         ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.White, modifier = Modifier.size(14.dp))
+                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = textSecondaryColor, modifier = Modifier.size(14.dp))
                         }
                     }
                 }
@@ -256,11 +292,15 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Kunci Biometrik / Sandi Sesi", fontSize = 12.sp)
+                    Text("Kunci Biometrik / Sandi Sesi", fontSize = 12.sp, color = textPrimaryColor, fontWeight = FontWeight.Medium)
                     Switch(
                         checked = isBiometricLockEnabled,
                         onCheckedChange = { isBiometricLockEnabled = it },
-                        colors = SwitchDefaults.colors(checkedThumbColor = EmeraldGreen, checkedTrackColor = EmeraldGreen.copy(alpha = 0.3f))
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = emeraldAccent,
+                            uncheckedTrackColor = if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
+                        )
                     )
                 }
             }
@@ -271,14 +311,15 @@ fun SettingsScreen(
         // Section 2: Sync & Connectivity
         Card(
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            colors = CardDefaults.cardColors(containerColor = cardBg),
+            border = BorderStroke(1.dp, cardBorder),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Sync, contentDescription = null, tint = ElectricCyan)
+                    Icon(Icons.Default.Sync, contentDescription = null, tint = primaryAccent)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Sinkronisasi & Jaringan", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Sinkronisasi & Jaringan", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textPrimaryColor)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
@@ -287,13 +328,17 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Sinkronisasi Otomatis", fontSize = 12.sp)
-                        Text("Kirim ringkasan terenkripsi saat online", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Sinkronisasi Otomatis", fontSize = 12.sp, color = textPrimaryColor, fontWeight = FontWeight.Medium)
+                        Text("Kirim ringkasan terenkripsi saat online", fontSize = 10.sp, color = textSecondaryColor)
                     }
                     Switch(
                         checked = isAutoSyncEnabled,
                         onCheckedChange = { isAutoSyncEnabled = it },
-                        colors = SwitchDefaults.colors(checkedThumbColor = ElectricCyan, checkedTrackColor = ElectricCyan.copy(alpha = 0.3f))
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = primaryAccent,
+                            uncheckedTrackColor = if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
+                        )
                     )
                 }
             }
@@ -304,18 +349,19 @@ fun SettingsScreen(
         // Section 3: Storage & Model Weights
         Card(
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            colors = CardDefaults.cardColors(containerColor = cardBg),
+            border = BorderStroke(1.dp, cardBorder),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Storage, contentDescription = null, tint = NeonViolet)
+                    Icon(Icons.Default.Storage, contentDescription = null, tint = violetAccent)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Penyimpanan & Bobot Model Offline", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Penyimpanan & Bobot Model Offline", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textPrimaryColor)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
-                Text("• Cache Model On-Device (Gemma/Qwen): 1.8 GB", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface)
-                Text("• Basis Data Obrolan & Enkripsi Room: 2.4 MB", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface)
+                Text("• Cache Model On-Device (Gemma/Qwen): 1.8 GB", fontSize = 11.sp, color = textPrimaryColor)
+                Text("• Basis Data Obrolan & Enkripsi Room: 2.4 MB", fontSize = 11.sp, color = textPrimaryColor)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
@@ -323,13 +369,16 @@ fun SettingsScreen(
                         onClearAllData()
                         Toast.makeText(context, "Basis data lokal dan cache berhasil dibersihkan!", Toast.LENGTH_SHORT).show()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5252).copy(alpha = 0.2f)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isDark) Color(0xFFFF5252).copy(alpha = 0.2f) else Color(0xFFFEE2E2)
+                    ),
                     shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, if (isDark) Color(0xFFFF5252).copy(alpha = 0.4f) else Color(0xFFFCA5A5)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFFF5252), modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFDC2626), modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Bersihkan Riwayat Obrolan & Cache", color = Color(0xFFFF5252), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("Bersihkan Riwayat Obrolan & Cache", color = Color(0xFFDC2626), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -339,20 +388,21 @@ fun SettingsScreen(
         // Section 4: Open-Source & Transparency
         Card(
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+            colors = CardDefaults.cardColors(containerColor = cardBg),
+            border = BorderStroke(1.dp, cardBorder),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Info, contentDescription = null, tint = ElectricCyan)
+                    Icon(Icons.Default.Info, contentDescription = null, tint = primaryAccent)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Transparansi & Open-Source", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Transparansi & Keamanan", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textPrimaryColor)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Nusantara AI menjamin privasi mutlak. Tidak ada telemetri, pelacakan iklan, atau server log percakapan.",
+                    text = "Nusantara AI menjamin privasi mutlak. Tidak ada telemetri komersial, pelacakan iklan, atau server log percakapan.",
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = textSecondaryColor,
                     lineHeight = 16.sp
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -360,7 +410,8 @@ fun SettingsScreen(
                     text = "Versi 1.0.0 (Hybrid Neural Engine Core)",
                     fontSize = 10.sp,
                     fontFamily = FontFamily.Monospace,
-                    color = EmeraldGreen
+                    fontWeight = FontWeight.Bold,
+                    color = emeraldAccent
                 )
             }
         }

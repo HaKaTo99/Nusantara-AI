@@ -1,6 +1,7 @@
 package com.example.ui.components
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -106,6 +107,16 @@ fun ModelSelectorDialog(
     var isScanning by remember { mutableStateOf(false) }
     var localModelsList by remember { mutableStateOf<List<DiscoveredLocalModel>>(emptyList()) }
 
+    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
+    val textPrimaryColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+    val textSecondaryColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF334155)
+    val primaryAccent = if (isDark) ElectricCyan else Color(0xFF0F52BA)
+    val emeraldAccent = if (isDark) EmeraldGreen else Color(0xFF047857)
+    val violetAccent = if (isDark) NeonViolet else Color(0xFF6D28D9)
+    val cardBg = if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF)
+    val cardBorder = if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)
+    val tabContainerBg = if (isDark) Color(0xFF182235) else Color(0xFFF1F5F9)
+
     // Initial scan on load
     LaunchedEffect(Unit) {
         localModelsList = scanner.scanDeviceStorage()
@@ -182,13 +193,14 @@ fun ModelSelectorDialog(
                     Icon(
                         imageVector = Icons.Default.Memory,
                         contentDescription = null,
-                        tint = ElectricCyan,
+                        tint = primaryAccent,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Manajer Model & Mesin AI",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = textPrimaryColor
                     )
                 }
             }
@@ -202,9 +214,11 @@ fun ModelSelectorDialog(
                 // Tab Selection: Model Preset vs Scan HP vs Model Hub
                 TabRow(
                     selectedTabIndex = activeTab,
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = ElectricCyan,
-                    modifier = Modifier.clip(RoundedCornerShape(12.dp))
+                    containerColor = tabContainerBg,
+                    contentColor = primaryAccent,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(1.dp, cardBorder, RoundedCornerShape(12.dp))
                 ) {
                     Tab(
                         selected = activeTab == 0,
@@ -213,7 +227,8 @@ fun ModelSelectorDialog(
                             Text(
                                 text = "Model Utama",
                                 fontSize = 11.sp,
-                                fontWeight = if (activeTab == 0) FontWeight.Bold else FontWeight.Normal
+                                fontWeight = if (activeTab == 0) FontWeight.Bold else FontWeight.Medium,
+                                color = if (activeTab == 0) primaryAccent else textSecondaryColor
                             )
                         }
                     )
@@ -222,13 +237,13 @@ fun ModelSelectorDialog(
                         onClick = { activeTab = 1 },
                         text = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(13.dp))
+                                Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(13.dp), tint = if (activeTab == 1) emeraldAccent else textSecondaryColor)
                                 Spacer(modifier = Modifier.width(3.dp))
                                 Text(
                                     text = "Scan (${localModelsList.size})",
                                     fontSize = 11.sp,
-                                    fontWeight = if (activeTab == 1) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (activeTab == 1) EmeraldGreen else MaterialTheme.colorScheme.onSurfaceVariant
+                                    fontWeight = if (activeTab == 1) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (activeTab == 1) emeraldAccent else textSecondaryColor
                                 )
                             }
                         }
@@ -238,13 +253,13 @@ fun ModelSelectorDialog(
                         onClick = { activeTab = 2 },
                         text = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Hub, contentDescription = null, modifier = Modifier.size(13.dp))
+                                Icon(Icons.Default.Hub, contentDescription = null, modifier = Modifier.size(13.dp), tint = if (activeTab == 2) primaryAccent else textSecondaryColor)
                                 Spacer(modifier = Modifier.width(3.dp))
                                 Text(
                                     text = "Hub GGUF",
                                     fontSize = 11.sp,
-                                    fontWeight = if (activeTab == 2) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (activeTab == 2) ElectricCyan else MaterialTheme.colorScheme.onSurfaceVariant
+                                    fontWeight = if (activeTab == 2) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (activeTab == 2) primaryAccent else textSecondaryColor
                                 )
                             }
                         }
@@ -259,7 +274,7 @@ fun ModelSelectorDialog(
                         text = "Pilih Mode Eksekusi:",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = textPrimaryColor
                     )
                     Spacer(modifier = Modifier.height(6.dp))
 
@@ -269,9 +284,11 @@ fun ModelSelectorDialog(
 
                     TabRow(
                         selectedTabIndex = selectedTabIndex,
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                        contentColor = ElectricCyan,
-                        modifier = Modifier.clip(RoundedCornerShape(10.dp))
+                        containerColor = tabContainerBg,
+                        contentColor = primaryAccent,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .border(1.dp, cardBorder, RoundedCornerShape(10.dp))
                     ) {
                         modes.forEachIndexed { index, modeKey ->
                             Tab(
@@ -281,7 +298,8 @@ fun ModelSelectorDialog(
                                     Text(
                                         text = modeLabels[index],
                                         fontSize = 11.sp,
-                                        fontWeight = if (selectedMode == modeKey) FontWeight.Bold else FontWeight.Normal
+                                        fontWeight = if (selectedMode == modeKey) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (selectedMode == modeKey) primaryAccent else textSecondaryColor
                                     )
                                 }
                             )
@@ -293,7 +311,7 @@ fun ModelSelectorDialog(
                         text = "Daftar Model AI Terintegrasi:",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = textPrimaryColor
                     )
                     Spacer(modifier = Modifier.height(6.dp))
 
@@ -301,8 +319,11 @@ fun ModelSelectorDialog(
                         val isSelected = selectedModel == model.name
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = if (isSelected) ElectricCyan.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                            border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, ElectricCyan) else null,
+                            color = if (isSelected) (if (isDark) Color(0xFF004D66) else Color(0xFFEFF6FF)) else cardBg,
+                            border = BorderStroke(
+                                width = if (isSelected) 1.5.dp else 1.dp,
+                                color = if (isSelected) primaryAccent else cardBorder
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp)
@@ -325,18 +346,19 @@ fun ModelSelectorDialog(
                                             text = model.name,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 13.sp,
-                                            color = if (isSelected) ElectricCyan else MaterialTheme.colorScheme.onSurface
+                                            color = if (isSelected) primaryAccent else textPrimaryColor
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         val typeColor = when (model.type) {
-                                            "CLOUD" -> ElectricCyan
-                                            "LOCAL" -> EmeraldGreen
-                                            else -> NeonViolet
+                                            "CLOUD" -> primaryAccent
+                                            "LOCAL" -> emeraldAccent
+                                            else -> violetAccent
                                         }
                                         Box(
                                             modifier = Modifier
                                                 .clip(RoundedCornerShape(6.dp))
-                                                .background(typeColor.copy(alpha = 0.2f))
+                                                .background(typeColor.copy(alpha = 0.15f))
+                                                .border(1.dp, typeColor.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
                                                 .padding(horizontal = 5.dp, vertical = 2.dp)
                                         ) {
                                             Text(
@@ -351,20 +373,20 @@ fun ModelSelectorDialog(
                                     Text(
                                         text = model.description,
                                         fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = textSecondaryColor
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
                                             text = "Konteks: ${model.contextWindow}",
                                             fontSize = 10.sp,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                            color = textSecondaryColor
                                         )
                                         Spacer(modifier = Modifier.width(10.dp))
                                         Text(
                                             text = model.speed,
                                             fontSize = 10.sp,
-                                            color = EmeraldGreen,
+                                            color = emeraldAccent,
                                             fontWeight = FontWeight.SemiBold
                                         )
                                     }
@@ -374,7 +396,7 @@ fun ModelSelectorDialog(
                                     Icon(
                                         imageVector = Icons.Default.Check,
                                         contentDescription = "Selected",
-                                        tint = ElectricCyan,
+                                        tint = primaryAccent,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -392,7 +414,7 @@ fun ModelSelectorDialog(
                             text = "Model Ditemukan di Storage:",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = textPrimaryColor
                         )
 
                         IconButton(
@@ -408,9 +430,9 @@ fun ModelSelectorDialog(
                             modifier = Modifier.size(28.dp)
                         ) {
                             if (isScanning) {
-                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = EmeraldGreen)
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = emeraldAccent)
                             } else {
-                                Icon(Icons.Default.Refresh, contentDescription = "Pindai Ulang", tint = EmeraldGreen, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.Refresh, contentDescription = "Pindai Ulang", tint = emeraldAccent, modifier = Modifier.size(18.dp))
                             }
                         }
                     }
@@ -420,19 +442,20 @@ fun ModelSelectorDialog(
                     if (localModelsList.isEmpty()) {
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            color = cardBg,
+                            border = BorderStroke(1.dp, cardBorder),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(
                                 modifier = Modifier.padding(16.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(32.dp))
+                                Icon(Icons.Default.Search, contentDescription = null, tint = textSecondaryColor, modifier = Modifier.size(32.dp))
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = "Tidak ada file model AI (.gguf, .tflite, .bin) di folder Download atau Dokumen.",
                                     fontSize = 11.sp,
-                                    color = Color.Gray,
+                                    color = textSecondaryColor,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                             }
@@ -442,8 +465,11 @@ fun ModelSelectorDialog(
                             val isSelected = selectedModel == modelFile.name
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
-                                color = if (isSelected) EmeraldGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                                border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, EmeraldGreen) else null,
+                                color = if (isSelected) (if (isDark) Color(0xFF004D66) else Color(0xFFEFF6FF)) else cardBg,
+                                border = BorderStroke(
+                                    width = if (isSelected) 1.5.dp else 1.dp,
+                                    color = if (isSelected) emeraldAccent else cardBorder
+                                ),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
@@ -466,20 +492,21 @@ fun ModelSelectorDialog(
                                                 text = modelFile.name,
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 13.sp,
-                                                color = if (isSelected) EmeraldGreen else MaterialTheme.colorScheme.onSurface
+                                                color = if (isSelected) emeraldAccent else textPrimaryColor
                                             )
                                             Spacer(modifier = Modifier.width(6.dp))
                                             Box(
                                                 modifier = Modifier
                                                     .clip(RoundedCornerShape(6.dp))
-                                                    .background(EmeraldGreen.copy(alpha = 0.2f))
+                                                    .background(emeraldAccent.copy(alpha = 0.2f))
+                                                    .border(1.dp, emeraldAccent.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
                                                     .padding(horizontal = 5.dp, vertical = 2.dp)
                                             ) {
                                                 Text(
                                                     text = modelFile.format,
                                                     fontSize = 9.sp,
                                                     fontWeight = FontWeight.Bold,
-                                                    color = EmeraldGreen
+                                                    color = emeraldAccent
                                                 )
                                             }
                                         }
@@ -487,12 +514,12 @@ fun ModelSelectorDialog(
                                         Text(
                                             text = "Ukuran: ${modelFile.formattedSize} • Kuantisasi: ${modelFile.quantization}",
                                             fontSize = 11.sp,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = textSecondaryColor
                                         )
                                         Text(
                                             text = "📍 ${modelFile.filePath}",
                                             fontSize = 9.sp,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                            color = textSecondaryColor.copy(alpha = 0.8f),
                                             maxLines = 1
                                         )
                                     }
@@ -501,7 +528,7 @@ fun ModelSelectorDialog(
                                         Icon(
                                             imageVector = Icons.Default.Check,
                                             contentDescription = "Selected",
-                                            tint = EmeraldGreen,
+                                            tint = emeraldAccent,
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
@@ -515,7 +542,7 @@ fun ModelSelectorDialog(
                         text = "Katalog Model GGUF Resmi (HuggingFace Hub):",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = textPrimaryColor
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -523,8 +550,11 @@ fun ModelSelectorDialog(
                         val isSelected = selectedModel == hubItem.name
                         Surface(
                             shape = RoundedCornerShape(14.dp),
-                            color = if (isSelected) ElectricCyan.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, ElectricCyan) else null,
+                            color = if (isSelected) (if (isDark) Color(0xFF004D66) else Color(0xFFEFF6FF)) else cardBg,
+                            border = BorderStroke(
+                                width = if (isSelected) 1.5.dp else 1.dp,
+                                color = if (isSelected) primaryAccent else cardBorder
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 5.dp)
@@ -541,26 +571,27 @@ fun ModelSelectorDialog(
                                             text = hubItem.name,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 13.sp,
-                                            color = if (isSelected) ElectricCyan else MaterialTheme.colorScheme.onSurface
+                                            color = if (isSelected) primaryAccent else textPrimaryColor
                                         )
                                         Text(
                                             text = hubItem.repository,
                                             fontSize = 10.sp,
-                                            color = Color.Gray
+                                            color = textSecondaryColor
                                         )
                                     }
 
                                     Box(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(6.dp))
-                                            .background(ElectricCyan.copy(alpha = 0.15f))
+                                            .background(primaryAccent.copy(alpha = 0.15f))
+                                            .border(1.dp, primaryAccent.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
                                         Text(
                                             text = "${hubItem.quantization} • ${hubItem.formattedSize}",
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = ElectricCyan
+                                            color = primaryAccent
                                         )
                                     }
                                 }
@@ -569,7 +600,7 @@ fun ModelSelectorDialog(
                                 Text(
                                     text = hubItem.description,
                                     fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = textSecondaryColor
                                 )
 
                                 Spacer(modifier = Modifier.height(6.dp))
@@ -581,28 +612,32 @@ fun ModelSelectorDialog(
                                     Text(
                                         text = "⚡ Rekomendasi: ${hubItem.recommendedRam}",
                                         fontSize = 10.sp,
-                                        color = EmeraldGreen
+                                        color = emeraldAccent,
+                                        fontWeight = FontWeight.Medium
                                     )
 
                                     when (hubItem.downloadStatus) {
                                         ModelDownloadStatus.NOT_DOWNLOADED -> {
                                             Button(
                                                 onClick = { onDownloadModel?.invoke(hubItem.id) },
-                                                colors = ButtonDefaults.buttonColors(containerColor = ElectricCyan),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = if (isDark) ElectricCyan else Color(0xFF2563EB),
+                                                    contentColor = if (isDark) Color(0xFF003344) else Color.White
+                                                ),
                                                 shape = RoundedCornerShape(8.dp),
                                                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                                                 modifier = Modifier.height(28.dp)
                                             ) {
-                                                Icon(Icons.Default.CloudDownload, contentDescription = null, tint = Color.Black, modifier = Modifier.size(14.dp))
+                                                Icon(Icons.Default.CloudDownload, contentDescription = null, tint = if (isDark) Color(0xFF003344) else Color.White, modifier = Modifier.size(14.dp))
                                                 Spacer(modifier = Modifier.width(4.dp))
-                                                Text("Unduh", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                                                Text("Unduh", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                             }
                                         }
                                         ModelDownloadStatus.DOWNLOADING -> {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                                CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = ElectricCyan)
+                                                CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = primaryAccent)
                                                 Spacer(modifier = Modifier.width(6.dp))
-                                                Text("%.0f%% (%.1f MB/s)".format(hubItem.downloadProgressPercent, hubItem.downloadSpeedMBs), fontSize = 10.sp, color = ElectricCyan)
+                                                Text("%.0f%% (%.1f MB/s)".format(hubItem.downloadProgressPercent, hubItem.downloadSpeedMBs), fontSize = 10.sp, color = primaryAccent)
                                                 Spacer(modifier = Modifier.width(6.dp))
                                                 TextButton(
                                                     onClick = { onCancelDownload?.invoke(hubItem.id) },
@@ -614,7 +649,7 @@ fun ModelSelectorDialog(
                                             }
                                         }
                                         ModelDownloadStatus.VERIFYING -> {
-                                            Text("Memverifikasi SHA-256...", fontSize = 10.sp, color = Color(0xFFFFB300), fontWeight = FontWeight.SemiBold)
+                                            Text("Memverifikasi SHA-256...", fontSize = 10.sp, color = Color(0xFFD97706), fontWeight = FontWeight.SemiBold)
                                         }
                                         ModelDownloadStatus.READY, ModelDownloadStatus.ACTIVE -> {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -624,7 +659,8 @@ fun ModelSelectorDialog(
                                                         selectedMode = "OFFLINE"
                                                     },
                                                     colors = ButtonDefaults.buttonColors(
-                                                        containerColor = if (isSelected) EmeraldGreen else ElectricCyan.copy(alpha = 0.2f)
+                                                        containerColor = if (isSelected) emeraldAccent else (if (isDark) Color(0xFF004D66) else Color(0xFFEFF6FF)),
+                                                        contentColor = if (isSelected) Color.White else primaryAccent
                                                     ),
                                                     shape = RoundedCornerShape(8.dp),
                                                     contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp),
@@ -633,8 +669,7 @@ fun ModelSelectorDialog(
                                                     Text(
                                                         text = if (isSelected) "Sedang Aktif" else "Pilih Model",
                                                         fontSize = 10.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = if (isSelected) Color.Black else ElectricCyan
+                                                        fontWeight = FontWeight.Bold
                                                     )
                                                 }
 
@@ -643,7 +678,7 @@ fun ModelSelectorDialog(
                                                     onClick = { onDeleteModel?.invoke(hubItem.id) },
                                                     modifier = Modifier.size(28.dp)
                                                 ) {
-                                                    Icon(Icons.Default.Delete, contentDescription = "Hapus", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                                    Icon(Icons.Default.Delete, contentDescription = "Hapus", tint = textSecondaryColor, modifier = Modifier.size(16.dp))
                                                 }
                                             }
                                         }
@@ -666,8 +701,8 @@ fun ModelSelectorDialog(
                                             .fillMaxWidth()
                                             .height(4.dp)
                                             .clip(RoundedCornerShape(2.dp)),
-                                        color = ElectricCyan,
-                                        trackColor = Color.DarkGray.copy(alpha = 0.5f)
+                                        color = primaryAccent,
+                                        trackColor = if (isDark) Color.DarkGray.copy(alpha = 0.5f) else Color(0xFFE2E8F0)
                                     )
                                 }
                             }
@@ -682,16 +717,17 @@ fun ModelSelectorDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Kreativitas (Temperature):", fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                    Text(text = "%.1f".format(temperature), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = ElectricCyan)
+                    Text(text = "Kreativitas (Temperature):", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = textPrimaryColor)
+                    Text(text = "%.1f".format(temperature), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = primaryAccent)
                 }
                 Slider(
                     value = temperature,
                     onValueChange = { temperature = it },
                     valueRange = 0.0f..1.0f,
                     colors = SliderDefaults.colors(
-                        thumbColor = ElectricCyan,
-                        activeTrackColor = ElectricCyan
+                        thumbColor = primaryAccent,
+                        activeTrackColor = primaryAccent,
+                        inactiveTrackColor = if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
                     )
                 )
             }
@@ -702,15 +738,18 @@ fun ModelSelectorDialog(
                     onModelSelected(selectedModel, selectedMode)
                     onDismiss()
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = ElectricCyan),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isDark) ElectricCyan else Color(0xFF2563EB),
+                    contentColor = if (isDark) Color(0xFF003344) else Color.White
+                ),
                 modifier = Modifier.testTag("confirm_model_button")
             ) {
-                Text(text = "Gunakan Model Ini", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(text = "Gunakan Model Ini", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "Batal", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "Batal", color = textSecondaryColor)
             }
         }
     )
