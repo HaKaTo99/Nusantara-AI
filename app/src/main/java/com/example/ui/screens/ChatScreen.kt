@@ -48,7 +48,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -468,8 +474,16 @@ fun ChatMessageItem(
                     )
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
+                    val formattedContent = remember(message.content, bubbleTextColor, isDark) {
+                        parseMarkdownToAnnotatedString(
+                            rawText = message.content,
+                            baseColor = bubbleTextColor,
+                            isDark = isDark
+                        )
+                    }
+
                     Text(
-                        text = message.content,
+                        text = formattedContent,
                         fontSize = 14.sp,
                         fontWeight = if (isUser) FontWeight.Medium else FontWeight.Normal,
                         lineHeight = 21.sp,
@@ -560,6 +574,110 @@ fun ChatMessageItem(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Parser Markdown cerdas dan berkinerja tinggi untuk Jetpack Compose.
+ * Mengonversi format Markdown (### Header, **Bold**, *Italic*, `Code`) menjadi AnnotatedString
+ * tanpa menampilkan simbol mentah (* / # / `) ke pengguna.
+ */
+fun parseMarkdownToAnnotatedString(
+    rawText: String,
+    baseColor: Color,
+    isDark: Boolean
+): AnnotatedString {
+    return buildAnnotatedString {
+        val lines = rawText.split("\n")
+        lines.forEachIndexed { lineIdx, line ->
+            val trimmedLine = line.trimEnd()
+            
+            // Deteksi Header Markdown
+            val isH1 = trimmedLine.startsWith("# ")
+            val isH2 = trimmedLine.startsWith("## ")
+            val isH3 = trimmedLine.startsWith("### ")
+            
+            val cleanLine = when {
+                isH1 -> trimmedLine.removePrefix("# ").trimStart()
+                isH2 -> trimmedLine.removePrefix("## ").trimStart()
+                isH3 -> trimmedLine.removePrefix("### ").trimStart()
+                else -> trimmedLine
+            }
+            
+            val startLinePos = length
+            
+            // Regex untuk parsing inline tokens: ***bold italic***, **bold**, *italic*, `inline code`
+            var cursor = 0
+            val regex = Regex("""(\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|\*(.+?)\*|`([^`]+)`)""")
+            val matches = regex.findAll(cleanLine)
+            
+            for (match in matches) {
+                if (match.range.first > cursor) {
+                    append(cleanLine.substring(cursor, match.range.first))
+                }
+                
+                val fullMatch = match.value
+                when {
+                    fullMatch.startsWith("***") && fullMatch.endsWith("***") && fullMatch.length > 6 -> {
+                        val inner = fullMatch.substring(3, fullMatch.length - 3)
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic)) {
+                            append(inner)
+                        }
+                    }
+                    fullMatch.startsWith("**") && fullMatch.endsWith("**") && fullMatch.length > 4 -> {
+                        val inner = fullMatch.substring(2, fullMatch.length - 2)
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(inner)
+                        }
+                    }
+                    fullMatch.startsWith("*") && fullMatch.endsWith("*") && fullMatch.length > 2 -> {
+                        val inner = fullMatch.substring(1, fullMatch.length - 1)
+                        withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                            append(inner)
+                        }
+                    }
+                    fullMatch.startsWith("`") && fullMatch.endsWith("`") && fullMatch.length > 2 -> {
+                        val inner = fullMatch.substring(1, fullMatch.length - 1)
+                        withStyle(
+                            SpanStyle(
+                                fontFamily = FontFamily.Monospace,
+                                background = if (isDark) Color(0xFF1E293B) else Color(0xFFE2E8F0),
+                                color = if (isDark) Color(0xFF00F2FE) else Color(0xFF0F52BA),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        ) {
+                            append(" $inner ")
+                        }
+                    }
+                    else -> append(fullMatch)
+                }
+                cursor = match.range.last + 1
+            }
+            
+            if (cursor < cleanLine.length) {
+                append(cleanLine.substring(cursor))
+            }
+            
+            val endLinePos = length
+            
+            // Terapkan styling Header jika terdeteksi
+            if (isH1 || isH2 || isH3) {
+                val headerFontSize = if (isH1) 16.sp else if (isH2) 15.sp else 14.5.sp
+                addStyle(
+                    SpanStyle(
+                        fontSize = headerFontSize,
+                        fontWeight = FontWeight.Bold,
+                        color = baseColor
+                    ),
+                    startLinePos,
+                    endLinePos
+                )
+            }
+            
+            if (lineIdx < lines.size - 1) {
+                append("\n")
             }
         }
     }
