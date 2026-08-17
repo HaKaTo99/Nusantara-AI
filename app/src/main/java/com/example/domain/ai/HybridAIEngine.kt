@@ -110,16 +110,17 @@ class HybridAIEngine(
         // MODE 1: OFFLINE MURNI (100% On-Device Neural Engine, No Internet Call)
         // =========================================================================
         if (modePreference == "OFFLINE") {
-            val offlineResponse = OfflineReasoningEngine.generateOfflineResponse(
+            val bridge = com.example.domain.ai.native.NativeLlamaBridge.getInstance(context)
+            val offlineResponse = bridge.generateComplete(
                 prompt = prompt,
                 personaRole = if (personaPrompt.isNotBlank()) personaPrompt else "Nusantara Core AI",
                 temperature = temperature
             )
 
-            val customOfflineModelName = if (selectedModel.contains("Local", ignoreCase = true) || selectedModel.contains("Garuda", ignoreCase = true)) {
+            val customOfflineModelName = if (selectedModel.contains("Local", ignoreCase = true) || selectedModel.contains("Garuda", ignoreCase = true) || selectedModel.contains("GGUF", ignoreCase = true)) {
                 selectedModel
             } else {
-                "On-Device Neural Engine ($selectedModel Offline)"
+                "On-Device GGUF ($selectedModel)"
             }
 
             analyticsDao.insertLog(

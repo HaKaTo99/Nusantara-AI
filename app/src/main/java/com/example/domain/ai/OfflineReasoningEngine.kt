@@ -281,12 +281,65 @@ object OfflineReasoningEngine {
 
                 // Coding / Multi-language Programming Engine
                 lower.contains("kode") || lower.contains("program") || lower.contains("kotlin") || lower.contains("python") ||
-                lower.contains("java") || lower.contains("javascript") || lower.contains("sql") || lower.contains("bash") ||
-                lower.contains("fungsi") || lower.contains("class") || lower.contains("kalkulator") || lower.contains("c++") -> {
-                    steps.add("💻 [Dev Sandbox] Menganalisis sintaks bahasa pemrograman dan algoritma")
+                lower.contains("phyton") || lower.contains("py") || lower.contains("java") || lower.contains("javascript") ||
+                lower.contains("sql") || lower.contains("bash") || lower.contains("fungsi") || lower.contains("class") ||
+                lower.contains("kalkulator") || lower.contains("c++") || lower.contains("algoritma") || lower.contains("alogaritma") ||
+                lower.contains("fraud") || lower.contains("anomali") || lower.contains("deteksi") -> {
+                    steps.add("💻 [Dev Sandbox] Menganalisis sintaks bahasa pemrograman dan struktur algoritma")
                     steps.add("⚡ [Optimization] Memastikan time complexity O(n) dan alokasi memori efisien")
 
                     when {
+                        lower.contains("fraud") || lower.contains("anomali") || (lower.contains("deteksi") && (lower.contains("transaksi") || lower.contains("keuangan"))) -> {
+                            artifactType = "PYTHON"
+                            codeArtifact = """
+import numpy as np
+
+# Simulasi Algoritma Deteksi Fraud Transaksi Finansial (Z-Score & Threshold Matrix)
+def deteksi_fraud_transaksi(riwayat_nominal: list, transaksi_baru: dict) -> dict:
+    rata_rata = np.mean(riwayat_nominal)
+    standar_deviasi = np.std(riwayat_nominal)
+    
+    # Hitung Z-Score nominal
+    nominal = transaksi_baru['amount']
+    z_score = (nominal - rata_rata) / (standar_deviasi if standar_deviasi > 0 else 1)
+    
+    skor_risiko = 0
+    alasan = []
+    
+    # 1. Anomali Nominal (Z-Score > 3.0)
+    if z_score > 3.0:
+        skor_risiko += 50
+        alasan.append(f"Nominal mencurigakan (Z-Score: {z_score:.2f})")
+        
+    # 2. Anomali Jam Transaksi (Dini Hari 01:00 - 04:00)
+    if 1 <= transaksi_baru['hour'] <= 4:
+        skor_risiko += 30
+        alasan.append("Transaksi dilakukan pada jam rawan (01:00-04:00)")
+        
+    # 3. Anomali Lokasi/IP Asing
+    if transaksi_baru.get('is_foreign_ip', False):
+        skor_risiko += 35
+        alasan.append("Akses dari alamat IP luar negeri tidak dikenal")
+        
+    is_fraud = skor_risiko >= 60
+    return {
+        "status": "🚨 FRAUD / DIBLOKIR" if is_fraud else "✓ VALID (Normal)",
+        "skor_risiko": skor_risiko,
+        "is_fraud": is_fraud,
+        "alasan": alasan or ["Pola transaksi konsisten dan wajar"]
+    }
+
+# Data Uji:
+riwayat_user = [150000, 200000, 180000, 220000, 175000, 210000, 190000]
+transaksi_curiga = {"amount": 75000000, "hour": 2, "is_foreign_ip": True}
+
+hasil = deteksi_fraud_transaksi(riwayat_user, transaksi_curiga)
+print("=== HASIL EVALUASI FRAUD NUSANTARA AI ===")
+print("Status:", hasil["status"])
+print("Skor Risiko:", hasil["skor_risiko"])
+print("Faktor Anomali:", ", ".join(hasil["alasan"]))
+                            """.trimIndent()
+                        }
                         lower.contains("java") && !lower.contains("javascript") -> {
                             artifactType = "JAVA"
                             codeArtifact = """
@@ -364,7 +417,7 @@ int main() {
 }
                             """.trimIndent()
                         }
-                        lower.contains("python") || lower.contains("py") -> {
+                        lower.contains("python") || lower.contains("phyton") || lower.contains("py") -> {
                             artifactType = "PYTHON"
                             codeArtifact = """
 # Nusantara AI Calculator & Data Processor
@@ -403,11 +456,11 @@ fun main() {
                     }
 
                     val lang = artifactType ?: "KOTLIN"
-                    answer = "Berikut adalah implementasi kode yang bersih, type-safe, dan teroptimasi:\n\n" +
+                    answer = "Berikut adalah implementasi algoritma/kode yang bersih, type-safe, dan teroptimasi:\n\n" +
                             "```${lang.lowercase()}\n$codeArtifact\n```\n\n" +
-                            "**Penjelasan Arsitektural:**\n" +
-                            "- Menjaga immutability data untuk menghindari efek samping (*side-effects*).\n" +
-                            "- Sepenuhnya aman, efisien, dan siap diuji langsung lewat tab **'Run Live'** di atas."
+                            "**Penjelasan Logika & Arsitektural:**\n" +
+                            "- Menjalankan komputasi deterministik on-device yang aman dan efisien.\n" +
+                            "- Dapat langsung Anda jalankan dan uji hasilnya secara live melalui tab **'Run Live'** pada kotak kode di atas."
                 }
 
                 // Medical / Health queries
