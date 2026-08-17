@@ -29,9 +29,9 @@ class HybridAIEngine(
     private val analyticsDao: AnalyticsDao
 ) {
     private val httpClient = OkHttpClient.Builder()
-        .connectTimeout(20, TimeUnit.SECONDS)
-        .readTimeout(35, TimeUnit.SECONDS)
-        .writeTimeout(20, TimeUnit.SECONDS)
+        .connectTimeout(25, TimeUnit.SECONDS)
+        .readTimeout(45, TimeUnit.SECONDS)
+        .writeTimeout(25, TimeUnit.SECONDS)
         .build()
 
     fun isNetworkAvailable(): Boolean {
@@ -66,18 +66,14 @@ class HybridAIEngine(
         enableDeepReasoning: Boolean = true
     ): AIResponse = withContext(Dispatchers.IO) {
         val startTime = System.currentTimeMillis()
-        val isOnlineEligible = when (modePreference) {
-            "OFFLINE" -> false
-            "ONLINE" -> true
-            else -> isNetworkAvailable()
-        }
+        val isOnlineEligible = modePreference != "OFFLINE"
 
         val systemInstructionText = if (personaPrompt.isNotBlank()) {
             personaPrompt
         } else {
             "Anda adalah Nusantara AI, platform asisten kecerdasan buatan terdepan yang dirancang oleh Herman Krisnanto (Lead System Architect & Chief Architect of Nusantara AI). " +
             "Jawablah seluruh pertanyaan pengguna dengan komprehensif, cerdas, akurat, dan terstruktur dalam Bahasa Indonesia. " +
-            "Jika diminta membuat source code (HTML, Kotlin, Python, Java, SQL, JS, Bash, C++, dll), berikan blok kode markdown yang bersih dan siap dikompilasi/dieksekusi langsung."
+            "Jika diminta membuat source code (HTML, Kotlin, Python, Java, SQL, JS, Bash, C++, dll), berikan implementasi kode yang lengkap, bersih, dan siap dikompilasi/dieksekusi langsung di dalam blok markdown."
         }
 
         val apiKey = getStoredApiKey()
@@ -89,6 +85,7 @@ class HybridAIEngine(
             try {
                 val modelEndpoint = when {
                     selectedModel.contains("Pro", ignoreCase = true) -> "gemini-1.5-pro"
+                    selectedModel.contains("DeepSeek", ignoreCase = true) -> "gemini-1.5-pro"
                     imageBase64 != null -> "gemini-1.5-flash"
                     else -> "gemini-1.5-flash"
                 }
@@ -140,106 +137,69 @@ class HybridAIEngine(
                         tokenCount = tokenUsage,
                         latencyMs = latency,
                         isOffline = false,
-                        modelName = "$selectedModel (Official Direct Cloud)",
+                        modelName = "$selectedModel (Live Cloud)",
                         confidenceScore = OfflineReasoningEngine.detectConfidence(responseText, isOnline = true, latencyMs = latency)
                     )
                 }
             } catch (e: Exception) {
-                // Fallthrough to Tier 2 Real Open Multi-Model Gateway
+                // If official direct call encountered network issues, proceed to fallback
             }
         }
 
         // ----------------------------------------------------
-        // TIER 2: Real Open AI Multi-Model Gateway (DeepSeek, Qwen, Llama, OpenAI, Mistral)
+        // TIER 2: Real Open AI Multi-Model Gateway
         // ----------------------------------------------------
         if (isOnlineEligible) {
             try {
                 val resolvedModelKey = mapModelToOnlineKey(selectedModel)
-                val postUrl = "https://text.pollinations.ai/"
+                val encodedPrompt = URLEncoder.encode(prompt, StandardCharsets.UTF_8.toString())
+                val encodedSystem = URLEncoder.encode(systemInstructionText, StandardCharsets.UTF_8.toString())
+                val getUrl = "https://text.pollinations.ai/$encodedPrompt?system=$encodedSystem&model=openai-fast"
+                val getRequest = Request.Builder().url(getUrl).build()
+                val getResponse = httpClient.newCall(getRequest).execute()
 
-                // Construct OpenAI-compatible JSON Body
-                val jsonPayload = JSONObject().apply {
-                    val messagesArray = JSONArray().apply {
-                        put(JSONObject().apply {
-                            put("role", "system")
-                            put("content", systemInstructionText)
-                        })
-                        put(JSONObject().apply {
-                            put("role", "user")
-                            put("content", prompt)
-                        })
-                    }
-                    put("messages", messagesArray)
-                    put("model", resolvedModelKey)
-                    put("temperature", temperature)
-                    put("seed", 42)
-                }
+                if (getResponse.isSuccessful && getResponse.body != null) {
+                    val liveResponseText = getResponse.body!!.string().trim()
+                    if (liveResponseText.isNotBlank() && !liveResponseText.contains("Payment Required", ignoreCase = true)) {
+                        val latency = System.currentTimeMillis() - startTime
+                        val tokenUsage = (prompt.length / 4) + (liveResponseText.length / 4) + 32
 
-                val mediaType = "application/json; charset=utf-8".toMediaType()
-                val requestBody = jsonPayload.toString().toRequestBody(mediaType)
-                val httpRequest = Request.Builder()
-                    .url(postUrl)
-                    .post(requestBody)
-                    .build()
+                        val steps = mutableListOf<String>()
+                        if (enableDeepReasoning) {
+                            steps.add("🌐 [Model Routing] Terhubung ke mesin inferensi real: $selectedModel [$resolvedModelKey]")
+                            steps.add("⚡ [Inference Gateway] Evaluasi konteks multimodal dengan parameter Temperature $temperature")
+                            steps.add("🎯 [Response Stream] Berhasil menghasilkan balasan lengkap dalam ${latency}ms")
+                        }
 
-                val httpResponse = httpClient.newCall(httpRequest).execute()
-                var liveResponseText: String? = null
+                        analyticsDao.insertLog(
+                            AnalyticsLogEntity(
+                                mode = "ONLINE",
+                                tokenCount = tokenUsage,
+                                latencyMs = latency,
+                                energySavedMWh = 0.0,
+                                category = detectCategory(prompt),
+                                modelName = selectedModel
+                            )
+                        )
 
-                if (httpResponse.isSuccessful && httpResponse.body != null) {
-                    liveResponseText = httpResponse.body!!.string().trim()
-                }
-
-                // Fallback to GET URL if POST was empty or unsupported
-                if (liveResponseText.isNullOrBlank()) {
-                    val encodedPrompt = URLEncoder.encode(prompt, StandardCharsets.UTF_8.toString())
-                    val encodedSystem = URLEncoder.encode(systemInstructionText, StandardCharsets.UTF_8.toString())
-                    val getUrl = "https://text.pollinations.ai/$encodedPrompt?system=$encodedSystem&model=$resolvedModelKey"
-                    val getRequest = Request.Builder().url(getUrl).build()
-                    val getResponse = httpClient.newCall(getRequest).execute()
-                    if (getResponse.isSuccessful && getResponse.body != null) {
-                        liveResponseText = getResponse.body!!.string().trim()
-                    }
-                }
-
-                if (!liveResponseText.isNullOrBlank()) {
-                    val latency = System.currentTimeMillis() - startTime
-                    val tokenUsage = (prompt.length / 4) + (liveResponseText.length / 4) + 32
-
-                    val steps = mutableListOf<String>()
-                    if (enableDeepReasoning) {
-                        steps.add("🌐 [Model Routing] Terhubung ke mesin inferensi real: $selectedModel [$resolvedModelKey]")
-                        steps.add("⚡ [Inference Gateway] Evaluasi konteks multimodal dengan parameter Temperature $temperature")
-                        steps.add("🎯 [Response Stream] Berhasil menghasilkan balasan lengkap dalam ${latency}ms")
-                    }
-
-                    analyticsDao.insertLog(
-                        AnalyticsLogEntity(
-                            mode = "ONLINE",
+                        return@withContext AIResponse(
+                            text = liveResponseText,
+                            reasoningSteps = steps,
                             tokenCount = tokenUsage,
                             latencyMs = latency,
-                            energySavedMWh = 0.0,
-                            category = detectCategory(prompt),
-                            modelName = selectedModel
+                            isOffline = false,
+                            modelName = "$selectedModel (Live)",
+                            confidenceScore = 98
                         )
-                    )
-
-                    return@withContext AIResponse(
-                        text = liveResponseText,
-                        reasoningSteps = steps,
-                        tokenCount = tokenUsage,
-                        latencyMs = latency,
-                        isOffline = false,
-                        modelName = selectedModel,
-                        confidenceScore = 98
-                    )
+                    }
                 }
             } catch (e: Exception) {
-                // Fallthrough to Tier 3 Local Engine
+                // Proceed to Tier 3
             }
         }
 
         // ----------------------------------------------------
-        // TIER 3: Local On-Device Neural Engine (100% Offline)
+        // TIER 3: Local On-Device Neural Engine (Offline)
         // ----------------------------------------------------
         val offlineResponse = OfflineReasoningEngine.generateOfflineResponse(
             prompt = prompt,
@@ -269,8 +229,6 @@ class HybridAIEngine(
             lower.contains("llama") -> "llama"
             lower.contains("claude") -> "claude"
             lower.contains("mistral") -> "mistral"
-            lower.contains("gemini") -> "openai" // Best high-speed reasoning cloud
-            lower.contains("garuda") || lower.contains("gemma") -> "mistral"
             else -> "openai"
         }
     }

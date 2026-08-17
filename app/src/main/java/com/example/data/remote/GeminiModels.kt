@@ -5,52 +5,52 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class GeminiGenerateRequest(
-    val contents: List<GeminiContent>,
-    val generationConfig: GeminiGenerationConfig? = null,
-    val systemInstruction: GeminiContent? = null
+    @Json(name = "contents") val contents: List<GeminiContent>,
+    @Json(name = "generationConfig") val generationConfig: GeminiGenerationConfig? = null,
+    @Json(name = "system_instruction") val systemInstruction: GeminiContent? = null
 )
 
 @JsonClass(generateAdapter = true)
 data class GeminiContent(
-    val role: String? = null,
-    val parts: List<GeminiPart>
+    @Json(name = "role") val role: String? = null,
+    @Json(name = "parts") val parts: List<GeminiPart>
 )
 
 @JsonClass(generateAdapter = true)
 data class GeminiPart(
-    val text: String? = null,
-    val inlineData: GeminiInlineData? = null
+    @Json(name = "text") val text: String? = null,
+    @Json(name = "inline_data") val inlineData: GeminiInlineData? = null
 )
 
 @JsonClass(generateAdapter = true)
 data class GeminiInlineData(
-    val mimeType: String,
-    val data: String
+    @Json(name = "mime_type") val mimeType: String,
+    @Json(name = "data") val data: String
 )
 
 @JsonClass(generateAdapter = true)
 data class GeminiGenerationConfig(
-    val temperature: Float? = null,
-    val topP: Float? = null,
-    val topK: Int? = null,
-    val maxOutputTokens: Int? = null
+    @Json(name = "temperature") val temperature: Float? = null,
+    @Json(name = "topP") val topP: Float? = null,
+    @Json(name = "topK") val topK: Int? = null,
+    @Json(name = "maxOutputTokens") val maxOutputTokens: Int? = null
 )
 
 @JsonClass(generateAdapter = true)
 data class GeminiGenerateResponse(
-    val candidates: List<GeminiCandidate>? = null,
-    val usageMetadata: GeminiUsageMetadata? = null
+    @Json(name = "candidates") val candidates: List<GeminiCandidate>? = null,
+    @Json(name = "usageMetadata") val usageMetadata: GeminiUsageMetadata? = null
 )
 
 @JsonClass(generateAdapter = true)
 data class GeminiCandidate(
-    val content: GeminiContent? = null,
-    val finishReason: String? = null
+    @Json(name = "content") val content: GeminiContent? = null,
+    @Json(name = "finishReason") val finishReason: String? = null
 )
 
 @JsonClass(generateAdapter = true)
 data class GeminiUsageMetadata(
-    val promptTokenCount: Int? = null,
-    val candidatesTokenCount: Int? = null,
-    val totalTokenCount: Int? = null
+    @Json(name = "promptTokenCount") val promptTokenCount: Int? = null,
+    @Json(name = "candidatesTokenCount") val candidatesTokenCount: Int? = null,
+    @Json(name = "totalTokenCount") val totalTokenCount: Int? = null
 )
