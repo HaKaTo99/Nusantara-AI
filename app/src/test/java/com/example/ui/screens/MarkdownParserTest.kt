@@ -56,4 +56,32 @@ class MarkdownParserTest {
         val hasItalic = annotated.spanStyles.any { it.item.fontStyle == FontStyle.Italic }
         assertTrue(hasItalic)
     }
+
+    @Test
+    fun testParseMessageSegments() {
+        val raw = """
+            Berikut adalah implementasi kode:
+            ```kotlin
+            fun main() {
+                println("Hello Nusantara")
+            }
+            ```
+            Penjelasan:
+            - Kode ini berjalan cepat
+        """.trimIndent()
+
+        val segments = parseMessageSegments(raw)
+        assertEquals(3, segments.size)
+
+        assertTrue(segments[0] is MessageSegment.Text)
+        assertEquals("Berikut adalah implementasi kode:", (segments[0] as MessageSegment.Text).content)
+
+        assertTrue(segments[1] is MessageSegment.Code)
+        val codeSegment = segments[1] as MessageSegment.Code
+        assertEquals("kotlin", codeSegment.language)
+        assertTrue(codeSegment.code.contains("Hello Nusantara"))
+
+        assertTrue(segments[2] is MessageSegment.Text)
+        assertTrue((segments[2] as MessageSegment.Text).content.contains("Penjelasan:"))
+    }
 }

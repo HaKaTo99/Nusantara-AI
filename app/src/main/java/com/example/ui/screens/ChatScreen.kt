@@ -390,15 +390,6 @@ fun ChatMessageItem(
     val isUser = message.sender == "USER"
     val reasoningSteps = OfflineReasoningEngine.jsonToReasoningSteps(message.reasoningStepsJson)
 
-    // Check if contains code blocks
-    val hasCodeBlock = message.content.contains("```")
-    val codeContent = if (hasCodeBlock) {
-        message.content.substringAfter("```").substringAfter("\n").substringBefore("```")
-    } else null
-    val codeLang = if (hasCodeBlock) {
-        message.content.substringAfter("```").substringBefore("\n").trim().ifBlank { "HTML" }
-    } else "HTML"
-
     val isDark = MaterialTheme.colorScheme.background.red < 0.5f
     val primaryColor = MaterialTheme.colorScheme.primary
 
@@ -474,21 +465,39 @@ fun ChatMessageItem(
                     )
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    val formattedContent = remember(message.content, bubbleTextColor, isDark) {
-                        parseMarkdownToAnnotatedString(
-                            rawText = message.content,
-                            baseColor = bubbleTextColor,
-                            isDark = isDark
-                        )
+                    // Segmented Rendering: Pisahkan Teks Penjelasan & Blok Source Code
+                    val segments = remember(message.content) {
+                        parseMessageSegments(message.content)
                     }
 
-                    Text(
-                        text = formattedContent,
-                        fontSize = 14.sp,
-                        fontWeight = if (isUser) FontWeight.Medium else FontWeight.Normal,
-                        lineHeight = 21.sp,
-                        color = bubbleTextColor
-                    )
+                    segments.forEach { segment ->
+                        when (segment) {
+                            is MessageSegment.Text -> {
+                                val formattedContent = remember(segment.content, bubbleTextColor, isDark) {
+                                    parseMarkdownToAnnotatedString(
+                                        rawText = segment.content,
+                                        baseColor = bubbleTextColor,
+                                        isDark = isDark
+                                    )
+                                }
+
+                                Text(
+                                    text = formattedContent,
+                                    fontSize = 14.sp,
+                                    fontWeight = if (isUser) FontWeight.Medium else FontWeight.Normal,
+                                    lineHeight = 21.sp,
+                                    color = bubbleTextColor,
+                                    modifier = Modifier.padding(vertical = 2.dp)
+                                )
+                            }
+                            is MessageSegment.Code -> {
+                                CodeArtifactView(
+                                    code = segment.code,
+                                    language = segment.language
+                                )
+                            }
+                        }
+                    }
 
                     // Generated Image Preview if present
                     val extractedImageUrl = remember(message.content) {
@@ -519,14 +528,6 @@ fun ChatMessageItem(
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
-                    }
-
-                    // Code Artifact if present
-                    if (!codeContent.isNullOrBlank()) {
-                        CodeArtifactView(
-                            code = codeContent,
-                            language = codeLang
-                        )
                     }
 
                     // Chain of Thought if present
@@ -599,10 +600,14 @@ fun parseMarkdownToAnnotatedString(
             val isH2 = trimmedLine.startsWith("## ")
             val isH3 = trimmedLine.startsWith("### ")
             
+            // Deteksi Bullet List (- item atau * item)
+            val isBullet = (trimmedLine.startsWith("- ") || (trimmedLine.startsWith("* ") && !trimmedLine.startsWith("** ")))
+
             val cleanLine = when {
                 isH1 -> trimmedLine.removePrefix("# ").trimStart()
                 isH2 -> trimmedLine.removePrefix("## ").trimStart()
                 isH3 -> trimmedLine.removePrefix("### ").trimStart()
+                isBullet -> "• " + trimmedLine.substring(2).trimStart()
                 else -> trimmedLine
             }
             
@@ -681,4 +686,52 @@ fun parseMarkdownToAnnotatedString(
             }
         }
     }
+}
+
+/**
+ * Representasi blok segmen pesan (Teks Penjelasan vs Source Code IDE Artifact).
+ */
+sealed class MessageSegment {
+    data class Text(val content: String) : MessageSegment()
+    data class Code(val code: String, val language: String) : MessageSegment()
+}
+
+/**
+ * Memecah konten balasan AI menjadi urutan terstruktur antara blok teks dan blok kode.
+ */
+fun parseMessageSegments(rawText: String): List<MessageSegment> {
+    if (!rawText.contains("```")) {
+        return listOf(MessageSegment.Text(rawText))
+    }
+
+    val segments = mutableListOf<MessageSegment>()
+    val codeFenceRegex = Regex("""```([a-zA-Z0-9_+#.-]*)\r?\n([\s\S]*?)```""")
+    
+    var cursor = 0
+    val matches = codeFenceRegex.findAll(rawText)
+    
+    for (match in matches) {
+        val startIdx = match.range.first
+        if (startIdx > cursor) {
+            val textBefore = rawText.substring(cursor, startIdx).trim()
+            if (textBefore.isNotEmpty()) {
+                segments.add(MessageSegment.Text(textBefore))
+            }
+        }
+        
+        val lang = match.groupValues[1].trim().ifBlank { "code" }
+        val codeBody = match.groupValues[2].trimEnd()
+        segments.add(MessageSegment.Code(code = codeBody, language = lang))
+        
+        cursor = match.range.last + 1
+    }
+    
+    if (cursor < rawText.length) {
+        val remainingText = rawText.substring(cursor).trim()
+        if (remainingText.isNotEmpty()) {
+            segments.add(MessageSegment.Text(remainingText))
+        }
+    }
+    
+    return if (segments.isNotEmpty()) segments else listOf(MessageSegment.Text(rawText))
 }
