@@ -15,15 +15,13 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubble
-import androidx.compose.material.icons.filled.CompareArrows
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SmartToy
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -41,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.DiagnosticsDialog
@@ -55,17 +54,16 @@ import com.example.ui.screens.MultimodalScreen
 import com.example.ui.screens.OnboardingScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.ToolsAndPersonaScreen
-import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.MainViewModel
 
 enum class AppDestination(val label: String, val icon: ImageVector, val tag: String) {
-    CHAT("Chat AI", Icons.Default.ChatBubble, "nav_chat"),
-    MULTIMODAL("Visual", Icons.Default.Image, "nav_multimodal"),
-    DEBATE("Debat", Icons.Default.CompareArrows, "nav_debate"),
-    TOOLS("Bot & Alat", Icons.Default.SmartToy, "nav_tools"),
+    CHAT("Obrolan", Icons.Default.ChatBubble, "nav_chat"),
+    MULTIMODAL("Studio", Icons.Default.Image, "nav_multimodal"),
+    TOOLS("Alat & Agen", Icons.Default.SmartToy, "nav_tools"),
+    ANALYTICS("Sistem", Icons.Default.Insights, "nav_analytics"),
+    DEBATE("Debat", Icons.Default.ChatBubble, "nav_debate"),
     AGENTS("Agen AI", Icons.Default.SmartToy, "nav_agents"),
-    ANALYTICS("Analitik", Icons.Default.Insights, "nav_analytics"),
     SETTINGS("Pengaturan", Icons.Default.Settings, "nav_settings")
 }
 
@@ -119,12 +117,12 @@ fun NusantaraApp(viewModel: MainViewModel) {
     var showEnterpriseDialog by remember { mutableStateOf(false) }
     var showSovereignAGIDialog by remember { mutableStateOf(false) }
 
-    // State collections
     val isOnline by viewModel.isOnline.collectAsState()
-    val syncState by viewModel.syncState.collectAsState()
-    val selectedModel by viewModel.selectedModel.collectAsState()
     val modePreference by viewModel.modePreference.collectAsState()
+    val selectedModel by viewModel.selectedModel.collectAsState()
+    val syncState by viewModel.syncState.collectAsState()
     val meshState by viewModel.meshState.collectAsState()
+
     val isProcessing by viewModel.isProcessing.collectAsState()
     val isListening by viewModel.isListening.collectAsState()
     val voiceAmplitude by viewModel.voiceAmplitude.collectAsState()
@@ -152,13 +150,11 @@ fun NusantaraApp(viewModel: MainViewModel) {
     val enterpriseROISummary by viewModel.enterpriseROISummary.collectAsState()
     val enterpriseGatewayState by viewModel.enterpriseGatewayState.collectAsState()
 
-    // Navigation items — 6 tabs (exclude SETTINGS dari bottom nav)
+    // Navigation items — 4 Essential Tabs
     val navItems = listOf(
         AppDestination.CHAT,
         AppDestination.MULTIMODAL,
-        AppDestination.DEBATE,
         AppDestination.TOOLS,
-        AppDestination.AGENTS,
         AppDestination.ANALYTICS
     )
 
@@ -187,7 +183,7 @@ fun NusantaraApp(viewModel: MainViewModel) {
         bottomBar = {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp
+                tonalElevation = 3.dp
             ) {
                 navItems.forEach { destination ->
                     val selected = currentDestination == destination
@@ -195,41 +191,24 @@ fun NusantaraApp(viewModel: MainViewModel) {
                         selected = selected,
                         onClick = { currentDestination = destination },
                         icon = {
-                            // Badge agen berjalan di tab AGENTS
-                            if (destination == AppDestination.AGENTS && runningAgentCount > 0) {
-                                BadgedBox(
-                                    badge = {
-                                        Badge {
-                                            Text(
-                                                text = runningAgentCount.toString(),
-                                                fontSize = 8.sp
-                                            )
-                                        }
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = destination.icon,
-                                        contentDescription = destination.label
-                                    )
-                                }
-                            } else {
-                                Icon(
-                                    imageVector = destination.icon,
-                                    contentDescription = destination.label
-                                )
-                            }
+                            Icon(
+                                imageVector = destination.icon,
+                                contentDescription = destination.label,
+                                modifier = Modifier.size(22.dp)
+                            )
                         },
                         label = {
                             Text(
                                 text = destination.label,
-                                fontSize = 9.sp,
+                                fontSize = 11.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                                 maxLines = 1
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onPrimary,
-                            selectedTextColor = ElectricCyan,
-                            indicatorColor = ElectricCyan.copy(alpha = 0.85f),
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
                             unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                         ),
@@ -360,7 +339,7 @@ fun NusantaraApp(viewModel: MainViewModel) {
         )
     }
 
-    // ── Phase 4: Enterprise RAG & Swarm Orchestrator Dialog ──────────────
+    // ── Phase 4: Enterprise RAG Compliance Dialog ────────────────────────
     if (showEnterpriseDialog) {
         com.example.ui.components.EnterpriseRAGDialog(
             ragStats = ragStats,
@@ -368,7 +347,7 @@ fun NusantaraApp(viewModel: MainViewModel) {
             swarmState = swarmWorkflowState,
             roiSummary = enterpriseROISummary,
             gatewayState = enterpriseGatewayState,
-            templates = viewModel.govTechTemplates,
+            templates = emptyList(),
             onSearchQuery = { viewModel.searchVectorRAG(it) },
             onIngestSampleDoc = { viewModel.ingestSampleEnterpriseDocument() },
             onStartSwarmWorkflow = { viewModel.startSwarmWorkflow(it) },
@@ -376,7 +355,7 @@ fun NusantaraApp(viewModel: MainViewModel) {
         )
     }
 
-    // ── Phase 5: Sovereign AGI & Decentralized Control Dialog ────────────
+    // ── Phase 5: Sovereign AGI Swarm Dialog ──────────────────────────────
     if (showSovereignAGIDialog) {
         com.example.ui.components.SovereignAGIDialog(
             onDismiss = { showSovereignAGIDialog = false }
