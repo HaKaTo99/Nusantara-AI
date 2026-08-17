@@ -774,6 +774,12 @@ fun ModelSelectorDialog(
             Button(
                 onClick = {
                     onModelSelected(selectedModel, selectedMode)
+                    val modeLabel = when (selectedMode) {
+                        "HYBRID" -> "Hibrida Otomatis"
+                        "ONLINE" -> "Cloud Saja"
+                        else -> "Offline Lokal"
+                    }
+                    Toast.makeText(context, "Model Aktif: $selectedModel ($modeLabel)", Toast.LENGTH_SHORT).show()
                     onDismiss()
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -782,7 +788,11 @@ fun ModelSelectorDialog(
                 ),
                 modifier = Modifier.testTag("confirm_model_button")
             ) {
-                Text(text = "Gunakan Model Ini", fontWeight = FontWeight.Bold)
+                Text(
+                    text = "Terapkan: $selectedModel",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
+                )
             }
         },
         dismissButton = {
