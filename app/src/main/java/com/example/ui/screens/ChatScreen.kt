@@ -118,7 +118,7 @@ fun ChatScreen(
                             .clip(CircleShape)
                             .background(
                                 androidx.compose.ui.graphics.Brush.linearGradient(
-                                    listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
+                                    listOf(primaryColor, MaterialTheme.colorScheme.secondary)
                                 )
                             ),
                         contentAlignment = Alignment.Center
@@ -137,7 +137,7 @@ fun ChatScreen(
                         text = "Apa yang bisa saya bantu hari ini?",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
                     )
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -145,7 +145,7 @@ fun ChatScreen(
                     Text(
                         text = "Tanyakan matematika, sains, koding, atau analisis data.",
                         fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
                     )
 
                     Spacer(modifier = Modifier.height(28.dp))
@@ -163,13 +163,13 @@ fun ChatScreen(
                                 rowPrompts.forEach { (prompt, label) ->
                                     Surface(
                                         shape = RoundedCornerShape(12.dp),
-                                        color = MaterialTheme.colorScheme.surface,
+                                        color = if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF),
                                         modifier = Modifier
                                             .weight(1f)
                                             .clip(RoundedCornerShape(12.dp))
                                             .border(
                                                 width = 1.dp,
-                                                color = MaterialTheme.colorScheme.outline.copy(alpha = if (isDark) 0.3f else 0.5f),
+                                                color = if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1),
                                                 shape = RoundedCornerShape(12.dp)
                                             )
                                             .clickable { onSendMessage(prompt) }
@@ -185,7 +185,7 @@ fun ChatScreen(
                                             Text(
                                                 text = prompt,
                                                 fontSize = 12.sp,
-                                                color = MaterialTheme.colorScheme.onSurface,
+                                                color = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A),
                                                 lineHeight = 16.sp
                                             )
                                         }
@@ -241,7 +241,7 @@ fun ChatScreen(
                                 text = "Sedang berpikir...",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
                             )
                         }
                     }
@@ -259,11 +259,16 @@ fun ChatScreen(
             )
         }
 
-        // Clean, Minimalist Input Bar
+        // Clean, Minimalist High-Contrast Input Bar
         Surface(
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 4.dp,
-            modifier = Modifier.fillMaxWidth()
+            color = if (isDark) MaterialTheme.colorScheme.surface else Color(0xFFFFFFFF),
+            tonalElevation = if (isDark) 4.dp else 2.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = if (isDark) 0.dp else 1.dp,
+                    color = if (isDark) Color.Transparent else Color(0xFFE2E8F0)
+                )
         ) {
             Row(
                 modifier = Modifier
@@ -282,14 +287,14 @@ fun ChatScreen(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Obrolan Baru",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF334155),
                         modifier = Modifier.size(20.dp)
                     )
                 }
 
                 Spacer(modifier = Modifier.width(4.dp))
 
-                // Text Input Pill
+                // Text Input Pill (High Contrast)
                 OutlinedTextField(
                     value = inputText,
                     onValueChange = { inputText = it },
@@ -297,7 +302,7 @@ fun ChatScreen(
                         Text(
                             text = if (isListening) "Mendengarkan..." else "Tanya apa saja...",
                             fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                         )
                     },
                     modifier = Modifier
@@ -305,12 +310,12 @@ fun ChatScreen(
                         .testTag("chat_input_field"),
                     shape = RoundedCornerShape(22.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedTextColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A),
+                        unfocusedTextColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A),
                         focusedBorderColor = primaryColor,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = if (isDark) 0.35f else 0.6f),
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                        unfocusedBorderColor = if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1),
+                        focusedContainerColor = if (isDark) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f) else Color(0xFFF8FAFC),
+                        unfocusedContainerColor = if (isDark) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f) else Color(0xFFF8FAFC)
                     ),
                     maxLines = 4
                 )
@@ -327,7 +332,7 @@ fun ChatScreen(
                         .clip(CircleShape)
                         .background(
                             if (isListening) Color(0xFFFF5252).copy(alpha = 0.2f)
-                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                            else if (isDark) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f) else Color(0xFFF1F5F9)
                         )
                         .testTag("voice_input_button")
                 ) {
@@ -355,14 +360,14 @@ fun ChatScreen(
                         .clip(CircleShape)
                         .background(
                             if (inputText.isNotBlank()) primaryColor
-                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                            else if (isDark) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f) else Color(0xFFE2E8F0)
                         )
                         .testTag("send_message_button")
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowUpward,
                         contentDescription = "Send",
-                        tint = if (inputText.isNotBlank()) MaterialTheme.colorScheme.onPrimary else Color.Gray,
+                        tint = if (inputText.isNotBlank()) Color.White else Color.Gray,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -391,6 +396,25 @@ fun ChatMessageItem(
     val isDark = MaterialTheme.colorScheme.background.red < 0.5f
     val primaryColor = MaterialTheme.colorScheme.primary
 
+    // High Contrast Bubble Colors
+    val bubbleColor = if (isUser) {
+        if (isDark) Color(0xFF1E293B) else Color(0xFF2563EB) // Deep Sapphire Blue in Light Mode
+    } else {
+        if (isDark) Color(0xFF101725) else Color(0xFFFFFFFF) // Pure White Card in Light Mode
+    }
+
+    val bubbleTextColor = if (isUser) {
+        Color.White // Pure White text on blue/dark user bubble
+    } else {
+        if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A) // Ultra-crisp Slate 900 on AI white card
+    }
+
+    val bubbleBorderColor = if (isUser) {
+        if (isDark) Color(0xFF334155) else Color(0xFF1D4ED8)
+    } else {
+        if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1) // Crisp light border
+    }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
@@ -402,7 +426,7 @@ fun ChatMessageItem(
                     .clip(CircleShape)
                     .background(
                         androidx.compose.ui.graphics.Brush.linearGradient(
-                            listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
+                            listOf(primaryColor, MaterialTheme.colorScheme.secondary)
                         )
                     ),
                 contentAlignment = Alignment.Center
@@ -430,13 +454,11 @@ fun ChatMessageItem(
                     bottomStart = if (isUser) 16.dp else 4.dp,
                     bottomEnd = if (isUser) 4.dp else 16.dp
                 ),
-                color = if (isUser) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surface,
+                color = bubbleColor,
                 modifier = Modifier
                     .border(
                         width = 1.dp,
-                        color = if (isUser) primaryColor.copy(alpha = if (isDark) 0.3f else 0.4f)
-                                else MaterialTheme.colorScheme.outline.copy(alpha = if (isDark) 0.25f else 0.6f),
+                        color = bubbleBorderColor,
                         shape = RoundedCornerShape(
                             topStart = 16.dp,
                             topEnd = 16.dp,
@@ -448,10 +470,10 @@ fun ChatMessageItem(
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
                         text = message.content,
-                        fontSize = 13.5.sp,
-                        lineHeight = 20.sp,
-                        color = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer
-                                else MaterialTheme.colorScheme.onSurface
+                        fontSize = 14.sp,
+                        fontWeight = if (isUser) FontWeight.Medium else FontWeight.Normal,
+                        lineHeight = 21.sp,
+                        color = bubbleTextColor
                     )
 
                     // Generated Image Preview if present
@@ -470,7 +492,7 @@ fun ChatMessageItem(
                                 .fillMaxWidth()
                                 .height(200.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                                .background(if (isDark) Color(0xFF182235) else Color(0xFFF1F5F9)),
                             contentAlignment = Alignment.Center
                         ) {
                             AsyncImage(
@@ -523,7 +545,7 @@ fun ChatMessageItem(
                         text = "${message.modelUsed} • ${message.latencyMs}ms",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     IconButton(

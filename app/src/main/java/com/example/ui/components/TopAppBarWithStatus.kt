@@ -1,6 +1,8 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -67,11 +69,15 @@ fun TopAppBarWithStatus(
     }
 
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
+        color = if (isDark) MaterialTheme.colorScheme.surface else Color(0xFFFFFFFF),
+        tonalElevation = if (isDark) 2.dp else 1.dp,
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
+            .border(
+                width = if (isDark) 0.dp else 1.dp,
+                color = if (isDark) Color.Transparent else Color(0xFFE2E8F0)
+            )
     ) {
         Row(
             modifier = Modifier
@@ -83,7 +89,11 @@ fun TopAppBarWithStatus(
             // Left: Clean Model Selector Pill
             Surface(
                 shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (isDark) 0.5f else 0.7f),
+                color = if (isDark) Color(0xFF182235) else Color(0xFFF1F5F9),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = if (isDark) Color(0xFF223147) else Color(0xFFCBD5E1)
+                ),
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
                     .clickable { onModelClick() }
@@ -107,13 +117,13 @@ fun TopAppBarWithStatus(
                         text = "Nusantara AI",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
                     )
 
                     Text(
                         text = " • ",
                         fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                     )
 
                     Text(
@@ -128,7 +138,7 @@ fun TopAppBarWithStatus(
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = "Pilih Model",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -164,7 +174,7 @@ fun TopAppBarWithStatus(
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = "Pengaturan",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF334155),
                         modifier = Modifier.size(18.dp)
                     )
                 }

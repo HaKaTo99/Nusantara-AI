@@ -29,23 +29,23 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = LightPrimaryCyan,
+    primary = LightPrimaryCyan,              // Deep Sapphire Blue
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFE0F2FE),
-    onPrimaryContainer = Color(0xFF0369A1),
-    secondary = LightSecondaryViolet,
+    primaryContainer = Color(0xFFEFF6FF),    // Soft Blue 50
+    onPrimaryContainer = Color(0xFF1E3A8A),  // Deep Blue 900
+    secondary = LightSecondaryViolet,        // Purple 700
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFF3E8FF),
-    onSecondaryContainer = Color(0xFF581C87),
-    tertiary = LightEmeraldGreen,
+    secondaryContainer = Color(0xFFF5F3FF),
+    onSecondaryContainer = Color(0xFF4C1D95),
+    tertiary = LightEmeraldGreen,            // Emerald 700
     onTertiary = Color.White,
-    background = LightBackground,
-    onBackground = LightTextPrimary,
-    surface = LightSurface,
-    onSurface = LightTextPrimary,
-    surfaceVariant = LightSurfaceVariant,
-    onSurfaceVariant = LightTextSecondary,
-    outline = LightCardBorder,
+    background = LightBackground,            // Slate 50 (Pure crisp paper)
+    onBackground = LightTextPrimary,         // Slate 900 (Ultra-sharp black)
+    surface = LightSurface,                  // Pure White
+    onSurface = LightTextPrimary,            // Slate 900
+    surfaceVariant = LightSurfaceVariant,    // Slate 100
+    onSurfaceVariant = LightTextSecondary,  // Slate 700
+    outline = LightCardBorder,               // Slate 300
     error = LightCoralError
 )
 
