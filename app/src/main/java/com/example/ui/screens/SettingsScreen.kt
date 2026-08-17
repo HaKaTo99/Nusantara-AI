@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrightnessAuto
+import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DarkMode
@@ -308,7 +309,72 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Section 2: Sync & Connectivity
+        // Section 2: AI Cloud Gateway & Model Engine
+        Card(
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = cardBg),
+            border = BorderStroke(1.dp, cardBorder),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            val sharedPrefs = remember { context.getSharedPreferences("nusantara_ai_prefs", Context.MODE_PRIVATE) }
+            var customKeyInput by remember { mutableStateOf(sharedPrefs.getString("custom_gemini_api_key", "") ?: "") }
+            var isSaved by remember { mutableStateOf(false) }
+
+            Column(modifier = Modifier.padding(14.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.CloudQueue, contentDescription = null, tint = primaryAccent)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Gateway Model AI Real-Time", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textPrimaryColor)
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Mode Default: Gateway Multi-Model Terbuka (DeepSeek-R1, Qwen 2.5 Coder, Llama 3.3, OpenAI) tanpa batas kuota API key.",
+                    fontSize = 11.sp,
+                    color = textSecondaryColor,
+                    lineHeight = 15.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Kunci Google Gemini API Pribadi (Opsional):",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = textPrimaryColor
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                androidx.compose.material3.OutlinedTextField(
+                    value = customKeyInput,
+                    onValueChange = { 
+                        customKeyInput = it
+                        isSaved = false
+                    },
+                    placeholder = { Text("Masukkan AIzaSy... (Opsional)", fontSize = 11.sp) },
+                    singleLine = true,
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, fontFamily = FontFamily.Monospace),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    trailingIcon = {
+                        Button(
+                            onClick = {
+                                sharedPrefs.edit().putString("custom_gemini_api_key", customKeyInput.trim()).apply()
+                                isSaved = true
+                                Toast.makeText(context, "Kunci API berhasil disimpan!", Toast.LENGTH_SHORT).show()
+                            },
+                            shape = RoundedCornerShape(6.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = primaryAccent),
+                            modifier = Modifier.padding(end = 4.dp).height(32.dp)
+                        ) {
+                            Text(if (isSaved) "Tersimpan ✓" else "Simpan", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Section 3: Sync & Connectivity
         Card(
             shape = RoundedCornerShape(14.dp),
             colors = CardDefaults.cardColors(containerColor = cardBg),
