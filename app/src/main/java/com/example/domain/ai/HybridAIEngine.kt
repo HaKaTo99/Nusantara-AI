@@ -68,7 +68,7 @@ class HybridAIEngine(
             )
 
             val response = RetrofitClient.geminiService.generateContent(
-                model = "gemini-1.5-flash",
+                model = "gemini-3.5-flash",
                 apiKey = apiKey,
                 request = request
             )
@@ -76,7 +76,7 @@ class HybridAIEngine(
             val text = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
             if (!text.isNullOrBlank()) {
                 val elapsed = System.currentTimeMillis() - startTime
-                Pair(true, "Kunci API Valid & Aktif • Model: gemini-1.5-flash (${elapsed}ms)")
+                Pair(true, "Kunci API Valid & Aktif • Model: Gemini 3.5 Flash (${elapsed}ms)")
             } else {
                 Pair(false, "Respon server kosong.")
             }
@@ -173,10 +173,10 @@ class HybridAIEngine(
             // Execute Direct Google Cloud Gemini Call
             try {
                 val modelEndpoint = when {
-                    selectedModel.contains("Pro", ignoreCase = true) -> "gemini-1.5-pro"
-                    selectedModel.contains("DeepSeek", ignoreCase = true) -> "gemini-1.5-pro"
-                    imageBase64 != null -> "gemini-1.5-flash"
-                    else -> "gemini-1.5-flash"
+                    selectedModel.contains("Pro", ignoreCase = true) -> "gemini-3.1-pro-preview"
+                    selectedModel.contains("DeepSeek", ignoreCase = true) -> "gemini-3.5-flash"
+                    imageBase64 != null -> "gemini-3.5-flash"
+                    else -> "gemini-3.5-flash"
                 }
 
                 val parts = mutableListOf<GeminiPart>()
@@ -249,10 +249,10 @@ class HybridAIEngine(
         if (apiKey.isNotBlank()) {
             try {
                 val modelEndpoint = when {
-                    selectedModel.contains("Pro", ignoreCase = true) -> "gemini-1.5-pro"
-                    selectedModel.contains("DeepSeek", ignoreCase = true) -> "gemini-1.5-pro"
-                    imageBase64 != null -> "gemini-1.5-flash"
-                    else -> "gemini-1.5-flash"
+                    selectedModel.contains("Pro", ignoreCase = true) -> "gemini-3.1-pro-preview"
+                    selectedModel.contains("DeepSeek", ignoreCase = true) -> "gemini-3.5-flash"
+                    imageBase64 != null -> "gemini-3.5-flash"
+                    else -> "gemini-3.5-flash"
                 }
 
                 val parts = mutableListOf<GeminiPart>()
